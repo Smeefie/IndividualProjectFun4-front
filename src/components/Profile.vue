@@ -14,14 +14,13 @@
             <v-avatar size="64">
               <img src="https://cdn.onlinewebfonts.com/svg/img_569205.png" />
             </v-avatar>
+            <v-list-item class="float-right">
+              <v-list-item-content>
+                <v-list-item-title class="title">{{Username}}</v-list-item-title>
+                <v-list-item-subtitle></v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
           </v-card-text>
-
-          <v-list-item dark>
-            <v-list-item-content>
-              <v-list-item-title class="title">User Name</v-list-item-title>
-              <v-list-item-subtitle></v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
         </v-card>
       </v-col>
     </v-row>
@@ -31,10 +30,23 @@
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
+
 export default {
   components: {
     Navbar,
     Authorized
+  },
+
+  data() {
+    return{
+      Username:""
+    }
+    
+  },
+
+  created(){
+    var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    this.Username = loggedInUser['name'];
   }
 };
 </script>

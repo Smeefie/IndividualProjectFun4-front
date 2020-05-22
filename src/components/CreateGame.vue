@@ -12,24 +12,35 @@
           </v-toolbar>
           <v-card-text>
             <v-col>
-              <v-select
+              <v-autocomplete
                 v-model="selectedUsers"
                 :items="users"
+                :search-input.sync="search"
+                filled
+                color="grey lighten-2"
+                label="Select users to play with"
                 item-text="name"
                 item-value="id"
-                label="Select users"
-                multiple
                 chips
-                hint="What users are joining the game"
-                persistent-hint
+                multiple
                 @change="EnableButton"
-              ></v-select>
+                @input="search = ''"
+              >
+                <template v-slot:selection="data">
+                  <v-chip
+                    v-bind="data.attrs"
+                    :input-value="data.selected"
+                    close
+                    @click="data.select"
+                    @click:close="remove(data.item)"
+                  >{{ data.item.name }}</v-chip>
+                </template>
+              </v-autocomplete>
             </v-col>
+            <v-card-actions class="justify-center">
+              <v-btn color="primary" :disabled="!buttonEnabled" @click="SubmitUsers">Start Game</v-btn>
+            </v-card-actions>
           </v-card-text>
-
-          <v-card-actions class="justify-center">
-            <v-btn color="primary" :disabled="!buttonEnabled" @click="SubmitUsers">Start Game</v-btn>
-          </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
@@ -50,18 +61,45 @@ export default {
   data() {
     return {
       buttonEnabled: false,
+      search: 'nultestl',
       selectedUsers: [],
       users: []
     };
   },
 
   created() {
-    axios.get("http://localhost:8000/api/GetAllUsers").then(response => {
-      this.fullResponse = response.data;
-      this.fullResponse.forEach(element => {
-        this.users.push(element);
+    this.users = [];
+    var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    axios
+      .post("http://localhost:8000/api/GetAllFriends", {
+        id: loggedInUser["id"]
+      })
+      .then(response => {
+        this.fullResponse = response.data;
+
+        if (this.fullResponse.length > 0) {
+          this.users.push({ header: "Friends" });
+          this.fullResponse.forEach(element => {
+            this.users.push({ name: element["name"], id: element["id"] });
+          });
+        }
       });
-    });
+
+    axios
+      .post("http://localhost:8000/api/GetAllUsersNotFriends", {
+        id: loggedInUser["id"]
+      })
+      .then(response => {
+        this.fullResponse = response.data;
+
+        if (this.fullResponse.length > 0) {
+          this.users.push({ divider: true });
+          this.users.push({ header: "Others" });
+          this.fullResponse.forEach(element => {
+            this.users.push({ name: element["name"], id: element["id"] });
+          });
+        }
+      });
   },
 
   methods: {
@@ -74,6 +112,11 @@ export default {
       } else {
         this.buttonEnabled = false;
       }
+    },
+    remove(item) {
+      const index = this.selectedUsers.indexOf(item.id);
+      if (index >= 0) this.selectedUsers.splice(index, 1);
+      this.EnableButton();
     }
   }
 };

@@ -4,6 +4,7 @@ import Router from 'vue-router';
 import Home from './components/HelloWorld.vue';
 import Login from './components/Login.vue';
 import Profile from './components/Profile.vue';
+import Friends from './components/Friends.vue';
 import CreateGame from './components/CreateGame.vue';
 import Game from './components/Game.vue';
 
@@ -23,6 +24,11 @@ const routes = [{
         path: '/Profile',
         name: 'Profile',
         component: Profile
+    },
+    {
+        path: '/Friends',
+        name: 'Friends',
+        component: Friends
     },
     {
         path: '/Game',

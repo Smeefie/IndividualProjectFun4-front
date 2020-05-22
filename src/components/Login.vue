@@ -54,13 +54,13 @@
           <v-container>
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="username" label="Username*" required></v-text-field>
+                <v-text-field v-model="username" label="Username*" required :rules="nameRules"></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="email" label="Email*" required></v-text-field>
+                <v-text-field v-model="email" label="Email*" required :rules="emailRules"></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="password" label="Password*" type="password" required></v-text-field>
+                <v-text-field v-model="password" label="Password*" type="password" required :rules="passwordRules"></v-text-field>
               </v-col>
               <v-col cols="12">
                 <v-text-field
@@ -101,7 +101,28 @@ export default {
       generalSnack: false,
       generalSnackColor: "error",
       generalSnackText: "",
-      generalSnackTimeout: 5000
+      generalSnackTimeout: 5000,
+
+      emailRules: [
+        value => !!value || "Required.",
+        value => (value || "").length <= 20 || "Max 20 characters",
+        value => {
+          const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          return pattern.test(value) || "Invalid e-mail.";
+        }
+      ],
+
+      nameRules: [
+        value => !!value || "Required.",
+        value => (value || "").length <= 20 || "Max 20 characters",
+        value => (value || "").length >= 3 || "Minimum of 3 characters",
+      ],
+
+      passwordRules: [
+        value => !!value || "Required.",
+        value => (value || "").length <= 20 || "Max 20 characters",
+        value => (value || "").length >= 4 || "Minimum of 4 characters",
+      ]
     };
   },
   methods: {
@@ -115,6 +136,7 @@ export default {
           .then(response => {
             this.fullResponse = response.data;
             localStorage.setItem("accessToken", response.data["access_token"]);
+            this.AddUserToLocalStorage(this.email);
             this.$router.push("/Profile");
           })
           .catch(error => {
@@ -129,7 +151,7 @@ export default {
     },
     Register() {
       if (
-        this.name != "" &&
+        this.username != "" &&
         this.email != "" &&
         this.password != "" &&
         this.password_confirmation != ""
@@ -144,6 +166,7 @@ export default {
           .then(response => {
             this.fullResponse = response.data;
             localStorage.setItem("accessToken", response.data["access_token"]);
+            this.AddUserToLocalStorage(this.email);
             this.$router.push("/Profile");
           })
           .catch(error => {
@@ -155,6 +178,20 @@ export default {
         this.generalSnackText = "Please enter all required fields!";
         this.generalSnack = true;
       }
+    },
+    
+    AddUserToLocalStorage(loggedInEmail) {
+      axios
+        .post("http://localhost:8000/api/GetUserByEmail", {
+          email: loggedInEmail
+        })
+        .then(response => {
+          this.fullResponse = response.data;
+          localStorage.setItem("loggedInUser", JSON.stringify(response.data));
+        })
+        .catch(error => {
+          console.warn(error);
+        });
     }
   }
 };

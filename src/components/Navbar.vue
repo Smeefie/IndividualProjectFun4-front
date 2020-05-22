@@ -11,6 +11,15 @@
           </v-list-item-content>
         </v-list-item>
 
+        <v-list-item link to="/Friends" :active="$router.name=='Friends'">
+          <v-list-item-action>
+            <v-icon>mdi-account-multiple</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Friends</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+
         <v-list-item
           link
           to="/CreateGame"
@@ -56,11 +65,11 @@
     <v-row justify="center">
       <v-dialog v-model="dialog" max-width="290">
         <v-card>
-          <v-card-title class="headline">Warning</v-card-title>
+          <v-card-title class="headline justify-center" >Warning</v-card-title>
 
-          <v-card-text>Are you sure you want to log out?</v-card-text>
+          <v-card-text class="text-center">Are you sure you want to log out?</v-card-text>
 
-          <v-card-actions>
+          <v-card-actions class="justify-center">
             <v-spacer></v-spacer>
 
             <v-btn color="green darken-1" text @click="dialog = false">No</v-btn>
@@ -91,6 +100,7 @@ export default {
   methods: {
     Logout() {
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("loggedInUser");
       this.$router.push("Login");
     },
     toggle() {
