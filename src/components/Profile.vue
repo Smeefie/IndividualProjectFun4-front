@@ -12,11 +12,11 @@
           </v-toolbar>
           <v-card-text>
             <v-avatar size="64">
-              <img src="https://cdn.onlinewebfonts.com/svg/img_569205.png" />
+              <img v-bind:src="require('../uploads/avatars/' + avatar)" />
             </v-avatar>
             <v-list-item class="float-right">
               <v-list-item-content>
-                <v-list-item-title class="title">{{Username}}</v-list-item-title>
+                <v-list-item-title class="title">{{username}}</v-list-item-title>
                 <v-list-item-subtitle></v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
@@ -39,14 +39,16 @@ export default {
 
   data() {
     return{
-      Username:""
+      username:"",
+      avatar:""
     }
     
   },
 
   created(){
     var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    this.Username = loggedInUser['name'];
+    this.username = loggedInUser['name'];
+    this.avatar = loggedInUser['avatar'];
   }
 };
 </script>

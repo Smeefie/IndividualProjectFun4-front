@@ -166,8 +166,8 @@ export default {
           .then(response => {
             this.fullResponse = response.data;
             localStorage.setItem("accessToken", response.data["access_token"]);
-            this.AddUserToLocalStorage(this.email);
-            this.$router.push("/Profile");
+            this.AddUserToLocalStorage(this.email);     
+            this.$router.push("/Profile");      
           })
           .catch(error => {
             console.warn(error);
@@ -181,7 +181,7 @@ export default {
     },
     
     AddUserToLocalStorage(loggedInEmail) {
-      axios
+      return axios
         .post("http://localhost:8000/api/GetUserByEmail", {
           email: loggedInEmail
         })

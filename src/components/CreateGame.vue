@@ -16,9 +16,8 @@
                 v-model="selectedUsers"
                 :items="users"
                 :search-input.sync="search"
-                filled
                 color="grey lighten-2"
-                label="Select users to play with"
+                placeholder="Select users"
                 item-text="name"
                 item-value="id"
                 chips
@@ -33,7 +32,26 @@
                     close
                     @click="data.select"
                     @click:close="remove(data.item)"
-                  >{{ data.item.name }}</v-chip>
+                  >
+                    <!-- <v-avatar left>
+                      <v-img v-bind:src="require('../uploads/avatars/' + data.item.avatar)"></v-img>
+                    </v-avatar> -->
+                    {{ data.item.name }}
+                  </v-chip>
+                </template>
+
+                <template v-slot:item="data">
+                  <template v-if="typeof data.item !== 'object'">
+                    <v-list-item-content v-text="data.item"></v-list-item-content>
+                  </template>
+                  <template v-else>
+                    <v-list-item-avatar>
+                      <img v-bind:src="require('../uploads/avatars/' + data.item.avatar)" />
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                      <v-list-item-title v-html="data.item.name"></v-list-item-title>
+                    </v-list-item-content>
+                  </template>
                 </template>
               </v-autocomplete>
             </v-col>
@@ -61,7 +79,7 @@ export default {
   data() {
     return {
       buttonEnabled: false,
-      search: 'nultestl',
+      search: "nultestl",
       selectedUsers: [],
       users: []
     };
@@ -80,7 +98,11 @@ export default {
         if (this.fullResponse.length > 0) {
           this.users.push({ header: "Friends" });
           this.fullResponse.forEach(element => {
-            this.users.push({ name: element["name"], id: element["id"] });
+            this.users.push({
+              name: element["name"],
+              id: element["id"],
+              avatar: element["avatar"]
+            });
           });
         }
       });
@@ -96,7 +118,8 @@ export default {
           this.users.push({ divider: true });
           this.users.push({ header: "Others" });
           this.fullResponse.forEach(element => {
-            this.users.push({ name: element["name"], id: element["id"] });
+            this.users.push({ name: element["name"], id: element["id"],
+              avatar: 'default.png' });
           });
         }
       });
