@@ -39,7 +39,7 @@
         :timeout="this.generalSnackTimeout"
       >
         {{ generalSnackText }}
-        <v-btn color="accent" text @click="generalSnack = false">Close</v-btn>
+        <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
       </v-snackbar>
     </v-container>
 

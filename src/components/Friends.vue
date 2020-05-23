@@ -59,7 +59,7 @@
                 </v-list-item-content>
 
                 <v-list-item-action>
-                  <v-tooltip left>
+                  <v-tooltip right>
                     <template v-slot:activator="{ on }">
                       <v-btn icon v-on="on" @click="removeFriend(friend)">
                         <v-icon>mdi-trash-can-outline</v-icon>
@@ -75,6 +75,42 @@
           <v-card-text v-if="!showFriendList">
             <v-card-title class="justify-center">No Friends</v-card-title>
           </v-card-text>
+
+          <v-card-text v-if="showFriendRequests">
+            <v-card-title class="justify-center">Friend Requests</v-card-title>
+
+            <v-list subheader>
+              <v-list-item v-for="friend in friendRequests" :key="friend.name">
+                <v-list-item-avatar>
+                  <v-img v-bind:src="require('../uploads/avatars/' + friend.avatar)"></v-img>
+                </v-list-item-avatar>
+
+                <v-list-item-content>
+                  <v-list-item-title v-text="friend.name"></v-list-item-title>
+                </v-list-item-content>
+
+                <v-card-actions>
+                  <v-tooltip left>
+                    <template v-slot:activator="{ on }">
+                      <v-btn icon v-on="on" @click="declineRequest(friend)">
+                        <v-icon>mdi-close</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>Decline</span>
+                  </v-tooltip>
+
+                  <v-tooltip right>
+                    <template v-slot:activator="{ on }">
+                      <v-btn icon v-on="on" @click="acceptRequest(friend)">
+                        <v-icon>mdi-check</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>Accept</span>
+                  </v-tooltip>
+                </v-card-actions>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -87,7 +123,7 @@
       :timeout="this.generalSnackTimeout"
     >
       {{ generalSnackText }}
-      <v-btn color="accent" text @click="generalSnack = false">Close</v-btn>
+      <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
     </v-snackbar>
   </v-content>
 </template>
@@ -107,8 +143,11 @@ export default {
     return {
       autoUpdate: true,
       isUpdating: false,
-      showFriendList: false,
+      showFriendList: true,
+      showFriendRequests: false,
       friends: [],
+      friendRequests: [],
+      currentFriends: [],
       users: [],
 
       generalSnack: false,
@@ -116,7 +155,7 @@ export default {
       generalSnackText: "",
       generalSnackTimeout: 5000,
 
-      currentFriends: []
+      
     };
   },
 
@@ -136,6 +175,178 @@ export default {
     remove(item) {
       const index = this.friends.indexOf(item.name);
       if (index >= 0) this.friends.splice(index, 1);
+    },
+
+    generateSnack(text, color = "error") {
+      this.generalSnackText = text;
+      this.generalSnackColor = color;
+      this.generalSnack = true;
+    },
+
+//#region Update and fill lists  
+    //FILL LISTS
+    fillUserList() {
+      this.users = [];
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+      axios
+        .post("http://localhost:8000/api/GetAllUsersNotFriends", {
+          id: loggedInUser["id"]
+        })
+        .then(response => {
+          this.fullResponse = response.data;
+
+          this.fullResponse.forEach(element => {
+            if (loggedInUser["id"] != element["id"])
+              this.addToList(this.users, element);
+          });
+        });
+    },
+
+    fillFriendsList() {
+      this.currentFriends = [];
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+      axios
+        .post("http://localhost:8000/api/GetAllFriends", {
+          id: loggedInUser["id"]
+        })
+        .then(response => {
+          this.fullResponse = response.data;
+
+          this.fullResponse.forEach(element => {
+            if (loggedInUser["id"] != element["id"])
+              this.addToList(this.currentFriends, element);
+          });
+          this.updateFriendList();
+        });
+    },
+
+    fillRequestsList() {
+      this.friendRequests = [];
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+      axios
+        .post("http://localhost:8000/api/GetAllFriendRequests", {
+          id: loggedInUser["id"]
+        })
+        .then(response => {
+          this.fullResponse = response.data;
+
+          this.fullResponse.forEach(element => {
+            axios
+              .post("http://localhost:8000/api/GetUserById", {
+                id: element["requester"]
+              })
+              .then(userResponse => {
+                this.addToList(this.friendRequests, userResponse.data);                
+              })
+              .finally(() => {
+                this.updateRequestList();
+              });             
+          });
+
+          if(this.fullResponse.length <= 0) {
+              this.updateRequestList();
+          }           
+        });
+    },
+
+    //UPDATE LISTS
+    updateFriendList() {
+      this.showFriendList = this.currentFriends.length > 0 ? true : false;
+    },
+
+    updateRequestList() {
+      this.showFriendRequests = this.friendRequests.length > 0 ? true : false;
+    },
+
+    updateLists() {
+      this.fillUserList();
+      this.fillFriendsList();
+      this.fillRequestsList();
+    },
+
+    //ADDING AND REMOVING FROM LISTS
+    addToList(list, userToAdd) {
+      list.push({
+        name: userToAdd["name"],
+        id: userToAdd["id"],
+        avatar: userToAdd["avatar"]
+      });
+    },
+
+    removeFromList(list, userToRemove) {
+      function findWithAttr(array, attr, value) {
+        for (var i = 0; i < array.length; i += 1) {
+          if (array[i][attr] === value) {
+            return i;
+          }
+        }
+        return -1;
+      }
+      list.splice(findWithAttr(list, "id", userToRemove["id"]), 1);
+    },
+
+//#endregion
+
+//#region Adding, Removing, Accepting and Declining
+    acceptRequest(user) {
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+      axios
+        .post("http://localhost:8000/api/AcceptFriend", {
+          id: loggedInUser["id"],
+          friendId: user.id
+        })
+        .then(() => {
+          axios
+            .post("http://localhost:8000/api/GetUserById", {
+              id: user.id
+            })
+            .then(userResponse => {
+              this.addToList(this.currentFriends, userResponse.data);
+              this.removeFromList(this.friendRequests, userResponse.data);
+              this.generateSnack(
+                "Accepted " + userResponse.data["name"] + " as a friend.",
+                "primary"
+              );
+              
+            })
+            .finally(() => {
+              this.updateRequestList();
+              this.updateFriendList();
+            });
+        })
+        .catch(error => {
+          this.generateSnack(error.message);
+        });
+    },
+
+    declineRequest(user) {
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+      axios
+        .post("http://localhost:8000/api/DeclineFriend", {
+          id: loggedInUser["id"],
+          friendId: user.id
+        })
+        .then(() => {
+          axios
+            .post("http://localhost:8000/api/GetUserById", {
+              id: user.id
+            })
+            .then(userResponse => {
+              this.removeFromList(this.friendRequests, userResponse.data);
+              this.generateSnack(
+                "Declined" + userResponse.data["name"] + " as a friend.",
+                "primary"
+              );
+              this.updateRequestList();
+            });
+        })
+        .catch(error => {
+          this.generateSnack(error.message);
+        });
     },
 
     addFriend() {
@@ -162,87 +373,26 @@ export default {
                   " as friend.",
                 "primary"
               );
-            });           
+              
+            })
+            .finally(() => {
+              this.fillRequestsList();
+              this.updateFriendList();
+            });
         })
         .catch(error => {
           this.generateSnack(error.message);
-        });       
-    },
-
-    fillUserList() {
-      this.users = [];
-      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-
-      axios
-        .post("http://localhost:8000/api/GetAllUsersNotFriends", {
-          id: loggedInUser["id"]
-        })
-        .then(response => {
-          this.fullResponse = response.data;
-
-          this.fullResponse.forEach(element => {
-            if (loggedInUser["id"] != element["id"])
-            this.addToList(this.users, element);
-          });
         });
-    },
-
-    fillFriendsList() {
-      this.currentFriends = [];
-      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-      axios
-        .post("http://localhost:8000/api/GetAllFriends", {
-          id: loggedInUser["id"]
-        })
-        .then(response => {
-          this.fullResponse = response.data;
-
-          if (this.fullResponse.length > 0) {
-            this.showFriendList = true;
-
-            this.fullResponse.forEach(element => {
-              if (loggedInUser["id"] != element["id"])
-                this.addToList(this.currentFriends, element);
-            });
-          } else {
-            this.showFriendList = false;
-          }
-        });
-    },
-
-    addToList(list, userToAdd) {
-      list.push({
-        name: userToAdd["name"],
-        id: userToAdd["id"],
-        avatar: userToAdd["avatar"]
-      });
-    },
-
-    removeFromList(list, userToRemove){
-      function findWithAttr(array, attr, value) {
-      for(var i = 0; i < array.length; i += 1) {
-        if(array[i][attr] === value) {
-            return i;
-          }
-        }
-      return -1;
-      }
-      list.splice(findWithAttr(list, 'id', userToRemove['id']), 1)
-    },
-
-    generateSnack(text, color = "error") {
-      this.generalSnackText = text;
-      this.generalSnackColor = color;
-      this.generalSnack = true;
     },
 
     removeFriend(friend) {
       var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-      axios.post("http://localhost:8000/api/RemoveFriend", {
-        id: loggedInUser["id"],
-        friendId: friend.id
-      })
-      .then(() => {
+      axios
+        .post("http://localhost:8000/api/RemoveFriend", {
+          id: loggedInUser["id"],
+          friendId: friend.id
+        })
+        .then(() => {
           axios
             .post("http://localhost:8000/api/GetUserById", {
               id: friend.id
@@ -250,27 +400,21 @@ export default {
             .then(userResponse => {
               this.addToList(this.users, userResponse.data);
               this.removeFromList(this.currentFriends, userResponse.data);
+              this.friends = [];
               this.generateSnack(
                 "Successfully removed " +
                   userResponse.data["name"] +
                   " as friend.",
                 "primary"
               );
+              this.updateFriendList();
             });
-
-            if(this.currentFriends.length <= 1){
-              this.showFriendList = false;
-            }
         })
         .catch(error => {
           this.generateSnack(error.message);
         });
     },
-
-    updateLists() {
-      this.fillUserList();
-      this.fillFriendsList();
-    }
+//#endregion   
   }
 };
 </script>

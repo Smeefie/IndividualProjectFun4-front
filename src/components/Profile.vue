@@ -20,6 +20,21 @@
                 <v-list-item-subtitle></v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
+
+            <v-list-item>
+              <v-spacer></v-spacer>
+            </v-list-item>
+            <v-list-item>
+              <v-file-input
+                :rules="rules"
+                accept="image/png, image/jpeg, image/bmp"
+                placeholder="Pick an avatar"
+                prepend-icon="mdi-camera"
+                label="Avatar"
+                disabled=""
+              ></v-file-input>
+              <v-btn disabled style="margin-left: 50px;">Upload</v-btn>
+            </v-list-item>
           </v-card-text>
         </v-card>
       </v-col>
@@ -38,17 +53,23 @@ export default {
   },
 
   data() {
-    return{
-      username:"",
-      avatar:""
-    }
-    
+    return {
+      username: "",
+      avatar: "",
+
+      rules: [
+        value =>
+          !value ||
+          value.size < 2000000 ||
+          "Avatar size should be less than 2 MB!"
+      ]
+    };
   },
 
-  created(){
+  created() {
     var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    this.username = loggedInUser['name'];
-    this.avatar = loggedInUser['avatar'];
-  }
+    this.username = loggedInUser["name"];
+    this.avatar = loggedInUser["avatar"];
+  },
 };
 </script>

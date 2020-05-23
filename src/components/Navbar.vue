@@ -13,7 +13,9 @@
 
         <v-list-item link to="/Friends" :active="$router.name=='Friends'">
           <v-list-item-action>
-            <v-icon>mdi-account-multiple</v-icon>
+            <v-badge :content="requests" :value="requests" overlap color="accent">
+              <v-icon>mdi-account-multiple</v-icon>
+            </v-badge>
           </v-list-item-action>
           <v-list-item-content>
             <v-list-item-title>Friends</v-list-item-title>
@@ -65,7 +67,7 @@
     <v-row justify="center">
       <v-dialog v-model="dialog" max-width="290">
         <v-card>
-          <v-card-title class="headline justify-center" >Warning</v-card-title>
+          <v-card-title class="headline justify-center">Warning</v-card-title>
 
           <v-card-text class="text-center">Are you sure you want to log out?</v-card-text>
 
@@ -84,18 +86,24 @@
 
 <script>
 import ToggleDarkmode from "@/components/ToggleDarkmode";
+import axios from "axios";
+
 export default {
   components: {
     ToggleDarkmode
   },
 
-  data: () => ({
-    drawer: null,
-    dialog: false,
-    return: {
-      dialog: false
+  data() {
+    return {
+      dialog: false,
+      requests: 0,
+      drawer: null,
     }
-  }),
+  },
+
+  created() {
+      this.updateBadges();
+  },
 
   methods: {
     Logout() {
@@ -105,6 +113,17 @@ export default {
     },
     toggle() {
       this.$vuetify.theme.dark = this.$vuetify.theme.dark ? false : true;
+    },
+    updateBadges(){
+        var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+      axios
+        .post("http://localhost:8000/api/GetAllFriendRequests", {
+          id: loggedInUser["id"]
+        })
+        .then(response => {
+          this.requests = response.data.length;          
+        });
     }
   }
 };
