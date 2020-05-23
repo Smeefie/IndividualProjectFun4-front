@@ -137,7 +137,7 @@ export default {
             this.fullResponse = response.data;
             localStorage.setItem("accessToken", response.data["access_token"]);
             this.AddUserToLocalStorage(this.email);
-            this.$router.push("/Profile");
+            
           })
           .catch(error => {
             console.warn(error);
@@ -191,6 +191,9 @@ export default {
         })
         .catch(error => {
           console.warn(error);
+        })
+        .finally(() => {
+            this.$router.push("/Profile");
         });
     }
   }

@@ -45,14 +45,51 @@
           </v-card-text>
 
           <v-spacer></v-spacer>
-          <v-card-text v-if="showFriendList">
+          <v-section>
+          <v-card-text v-if="currentFriends.length >0">
             <v-card-title class="justify-center">Current Friends</v-card-title>
 
             <v-list subheader>
               <v-list-item v-for="friend in currentFriends" :key="friend.name">
-                <v-list-item-avatar>
-                  <v-img v-bind:src="require('../uploads/avatars/' + friend.avatar)"></v-img>
-                </v-list-item-avatar>
+                <v-badge
+                  :content="friend.status"
+                  :value="friend.status"
+                  overlap
+                  color="#324d3d"
+                  offset-x="28"
+                  offset-y="20"
+                  v-if="friend.status > 0"
+                >
+                  <v-list-item-avatar>
+                    <v-img
+                      v-bind:src="require('../uploads/avatars/' + friend.avatar)"
+                      style="border-radius:50%"
+                    ></v-img>
+                  </v-list-item-avatar>
+                  <template v-slot:badge>
+                    <v-icon>mdi-check</v-icon>
+                  </template>
+                </v-badge>
+
+                <v-badge
+                  :content="1"
+                  :value="1"
+                  overlap
+                  color="#75664b"
+                  offset-x="28"
+                  offset-y="20"
+                  v-else
+                >
+                  <v-list-item-avatar>
+                    <v-img
+                      v-bind:src="require('../uploads/avatars/' + friend.avatar)"
+                      style="border-radius:50%"
+                    ></v-img>
+                  </v-list-item-avatar>
+                  <template v-slot:badge>
+                    <v-icon>mdi-dots-horizontal</v-icon>
+                  </template>
+                </v-badge>
 
                 <v-list-item-content>
                   <v-list-item-title v-text="friend.name"></v-list-item-title>
@@ -72,11 +109,12 @@
             </v-list>
           </v-card-text>
 
-          <v-card-text v-if="!showFriendList">
+          <v-card-text v-else>
             <v-card-title class="justify-center">No Friends</v-card-title>
           </v-card-text>
+          </v-section>
 
-          <v-card-text v-if="showFriendRequests">
+          <v-card-text v-if="friendRequests.length > 0">
             <v-card-title class="justify-center">Friend Requests</v-card-title>
 
             <v-list subheader>
@@ -143,8 +181,6 @@ export default {
     return {
       autoUpdate: true,
       isUpdating: false,
-      showFriendList: true,
-      showFriendRequests: false,
       friends: [],
       friendRequests: [],
       currentFriends: [],
@@ -153,9 +189,7 @@ export default {
       generalSnack: false,
       generalSnackColor: "error",
       generalSnackText: "",
-      generalSnackTimeout: 5000,
-
-      
+      generalSnackTimeout: 5000
     };
   },
 
@@ -183,7 +217,7 @@ export default {
       this.generalSnack = true;
     },
 
-//#region Update and fill lists  
+    //#region Update and fill lists
     //FILL LISTS
     fillUserList() {
       this.users = [];
@@ -215,9 +249,8 @@ export default {
 
           this.fullResponse.forEach(element => {
             if (loggedInUser["id"] != element["id"])
-              this.addToList(this.currentFriends, element);
+              this.addToList(this.currentFriends, element, true);
           });
-          this.updateFriendList();
         });
     },
 
@@ -238,28 +271,13 @@ export default {
                 id: element["requester"]
               })
               .then(userResponse => {
-                this.addToList(this.friendRequests, userResponse.data);                
-              })
-              .finally(() => {
-                this.updateRequestList();
-              });             
+                this.addToList(this.friendRequests, userResponse.data);
+              });
           });
-
-          if(this.fullResponse.length <= 0) {
-              this.updateRequestList();
-          }           
         });
     },
 
     //UPDATE LISTS
-    updateFriendList() {
-      this.showFriendList = this.currentFriends.length > 0 ? true : false;
-    },
-
-    updateRequestList() {
-      this.showFriendRequests = this.friendRequests.length > 0 ? true : false;
-    },
-
     updateLists() {
       this.fillUserList();
       this.fillFriendsList();
@@ -267,12 +285,30 @@ export default {
     },
 
     //ADDING AND REMOVING FROM LISTS
-    addToList(list, userToAdd) {
-      list.push({
-        name: userToAdd["name"],
-        id: userToAdd["id"],
-        avatar: userToAdd["avatar"]
-      });
+    addToList(list, userToAdd, doFriendlist = false) {
+      if (doFriendlist) {
+        var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+        axios
+          .post("http://localhost:8000/api/GetFriendRequest", {
+            id: loggedInUser["id"],
+            friendId: userToAdd.id
+          })
+          .then(response => {
+            list.push({
+              name: userToAdd["name"],
+              id: userToAdd["id"],
+              avatar: userToAdd["avatar"],
+              status: response.data["status"]
+            });
+          });
+      } else {
+        list.push({
+          name: userToAdd["name"],
+          id: userToAdd["id"],
+          avatar: userToAdd["avatar"],
+          status: 0
+        });
+      }
     },
 
     removeFromList(list, userToRemove) {
@@ -287,9 +323,9 @@ export default {
       list.splice(findWithAttr(list, "id", userToRemove["id"]), 1);
     },
 
-//#endregion
+    //#endregion
 
-//#region Adding, Removing, Accepting and Declining
+    //#region Adding, Removing, Accepting and Declining
     acceptRequest(user) {
       var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
@@ -304,17 +340,12 @@ export default {
               id: user.id
             })
             .then(userResponse => {
-              this.addToList(this.currentFriends, userResponse.data);
+              this.addToList(this.currentFriends, userResponse.data, true);
               this.removeFromList(this.friendRequests, userResponse.data);
               this.generateSnack(
                 "Accepted " + userResponse.data["name"] + " as a friend.",
                 "primary"
               );
-              
-            })
-            .finally(() => {
-              this.updateRequestList();
-              this.updateFriendList();
             });
         })
         .catch(error => {
@@ -341,7 +372,6 @@ export default {
                 "Declined" + userResponse.data["name"] + " as a friend.",
                 "primary"
               );
-              this.updateRequestList();
             });
         })
         .catch(error => {
@@ -364,20 +394,17 @@ export default {
               id: this.fullResponse["userRequested"]
             })
             .then(userResponse => {
-              this.addToList(this.currentFriends, userResponse.data);
+              this.addToList(this.currentFriends, userResponse.data, true);
               this.removeFromList(this.users, userResponse.data);
-              this.showFriendList = true;
               this.generateSnack(
                 "Successfully added " +
                   userResponse.data["name"] +
                   " as friend.",
                 "primary"
               );
-              
             })
             .finally(() => {
               this.fillRequestsList();
-              this.updateFriendList();
             });
         })
         .catch(error => {
@@ -407,14 +434,13 @@ export default {
                   " as friend.",
                 "primary"
               );
-              this.updateFriendList();
             });
         })
         .catch(error => {
           this.generateSnack(error.message);
         });
-    },
-//#endregion   
+    }
+    //#endregion
   }
 };
 </script>
