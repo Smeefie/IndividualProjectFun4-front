@@ -11,6 +11,16 @@
             <v-spacer></v-spacer>
           </v-toolbar>
           <v-card-text>
+            <v-form>
+            <v-text-field
+                  id="roundLimit"
+                  label="Round Limit"
+                  name="roundLimit"
+                  v-model="roundLimit"
+                  :rules="limitRules"
+                  hint="Default is 15"
+                  style="padding: 15px 10px 0 10px"
+                ></v-text-field>
             <v-col>
               <v-autocomplete
                 v-model="selectedUsers"
@@ -58,6 +68,7 @@
             <v-card-actions class="justify-center">
               <v-btn color="primary" :disabled="!buttonEnabled" @click="SubmitUsers">Start Game</v-btn>
             </v-card-actions>
+            </v-form>
           </v-card-text>
         </v-card>
       </v-col>
@@ -79,9 +90,17 @@ export default {
   data() {
     return {
       buttonEnabled: false,
-      search: "nultestl",
+      search: "",
       selectedUsers: [],
-      users: []
+      users: [],
+      roundLimit: '',
+      limitRules: [
+        value => {
+          const pattern = /^[0-9]*$/;
+          return pattern.test(value) || "Must be a number";
+        }
+      ],
+
     };
   },
 
@@ -128,6 +147,7 @@ export default {
   methods: {
     SubmitUsers() {
       console.log(this.selectedUsers);
+        this.$router.push({path: `/Game?users=${JSON.stringify(this.selectedUsers)}&limit=${this.roundLimit == '' ? JSON.stringify(15) : JSON.stringify(parseInt(this.roundLimit))}`});
     },
     EnableButton() {
       if (this.selectedUsers.length >= 2) {

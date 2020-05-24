@@ -2,6 +2,7 @@
   <div>
     <v-navigation-drawer v-model="drawer" app clipped>
       <v-list dense>
+        <v-subheader>Social</v-subheader>
         <v-list-item link to="/Profile" :active="$router.name=='Profile'">
           <v-list-item-action>
             <v-icon>mdi-account</v-icon>
@@ -22,10 +23,12 @@
           </v-list-item-content>
         </v-list-item>
 
+        <v-divider style="margin-bottom:10px; margin-top: 10px"></v-divider>
+        <v-subheader>Game</v-subheader>
         <v-list-item
           link
           to="/CreateGame"
-          :active="$router.name=='CreateGame' || $router.name=='Game'"
+          :active="$router.name=='CreateGame' || $router.name=='Game/:users'"
         >
           <v-list-item-action>
             <v-icon>mdi-gamepad-square-outline</v-icon>
@@ -46,6 +49,15 @@
 
         <div style=" position: absolute; bottom: 10%; width: 100%">
           <v-divider style="margin-bottom:10px;"></v-divider>
+          <v-list-item link to :active="$router.name==''">
+            <v-list-item-action>
+              <v-icon>mdi-cog</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>Settings</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
           <v-list-item link @click="dialog = true">
             <v-list-item-action>
               <v-icon>mdi-logout</v-icon>
@@ -60,7 +72,7 @@
 
     <v-app-bar app clipped-left>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>De Toephulp</v-toolbar-title>
+      <v-toolbar-title>De Toephulp V2.0</v-toolbar-title>
       <ToggleDarkmode @toggle="toggle" />
     </v-app-bar>
 
@@ -97,12 +109,12 @@ export default {
     return {
       dialog: false,
       requests: 0,
-      drawer: null,
-    }
+      drawer: null
+    };
   },
 
   created() {
-      this.updateBadges();
+    this.updateBadges();
   },
 
   methods: {
@@ -114,15 +126,15 @@ export default {
     toggle() {
       this.$vuetify.theme.dark = this.$vuetify.theme.dark ? false : true;
     },
-    updateBadges(){
-        var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    updateBadges() {
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
       axios
         .post("http://localhost:8000/api/GetAllFriendRequests", {
           id: loggedInUser["id"]
         })
         .then(response => {
-          this.requests = response.data.length;          
+          this.requests = response.data.length;
         });
     }
   }

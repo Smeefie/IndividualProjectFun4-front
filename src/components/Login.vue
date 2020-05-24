@@ -15,7 +15,9 @@
                   id="password"
                   label="Password"
                   name="password"
-                  type="password"
+                  :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="show1 ? 'text' : 'password'"
+                  @click:append="show1 = !show1"
                   v-model="password"
                 ></v-text-field>
               </v-form>
@@ -54,19 +56,42 @@
           <v-container>
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="username" label="Username*" required :rules="nameRules"></v-text-field>
+                <v-text-field
+                  v-model="username"
+                  :counter="20"
+                  label="Username*"
+                  required
+                  :rules="nameRules"
+                ></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="email" label="Email*" required :rules="emailRules"></v-text-field>
+                <v-text-field
+                  v-model="email"
+                  :counter="30"
+                  label="Email*"
+                  required
+                  :rules="emailRules"
+                ></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="password" label="Password*" type="password" required :rules="passwordRules"></v-text-field>
+                <v-text-field
+                  v-model="password"
+                  :counter="20"
+                  label="Password*"
+                  :append-icon="show2 ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="show2 ? 'text' : 'password'"
+                  @click:append="show2 = !show2"                 
+                  required
+                  :rules="passwordRules"
+                ></v-text-field>
               </v-col>
               <v-col cols="12">
                 <v-text-field
                   v-model="password_confirmation"
                   label="Verify Password*"
-                  type="password"
+                  :append-icon="show3 ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="show3 ? 'text' : 'password'"
+                  @click:append="show3 = !show3"             
                   required
                 ></v-text-field>
               </v-col>
@@ -97,6 +122,10 @@ export default {
       password_confirmation: "",
 
       registerModal: false,
+      show1: false,
+      show2: false,
+      show3: false,
+
 
       generalSnack: false,
       generalSnackColor: "error",
@@ -105,7 +134,7 @@ export default {
 
       emailRules: [
         value => !!value || "Required.",
-        value => (value || "").length <= 20 || "Max 20 characters",
+        value => (value || "").length <= 35 || "Max 35 characters",
         value => {
           const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
           return pattern.test(value) || "Invalid e-mail.";
@@ -115,13 +144,13 @@ export default {
       nameRules: [
         value => !!value || "Required.",
         value => (value || "").length <= 20 || "Max 20 characters",
-        value => (value || "").length >= 3 || "Minimum of 3 characters",
+        value => (value || "").length >= 3 || "Minimum of 3 characters"
       ],
 
       passwordRules: [
         value => !!value || "Required.",
         value => (value || "").length <= 20 || "Max 20 characters",
-        value => (value || "").length >= 4 || "Minimum of 4 characters",
+        value => (value || "").length >= 4 || "Minimum of 4 characters"
       ]
     };
   },
@@ -133,11 +162,11 @@ export default {
             email: this.email,
             password: this.password
           })
-          .then(response => {
+          .then(async response => {
             this.fullResponse = response.data;
             localStorage.setItem("accessToken", response.data["access_token"]);
-            this.AddUserToLocalStorage(this.email);
-            
+            await this.AddUserToLocalStorage(this.email);
+            this.$router.push("/Profile");
           })
           .catch(error => {
             console.warn(error);
@@ -163,11 +192,10 @@ export default {
             password: this.password,
             password_confirmation: this.password_confirmation
           })
-          .then(response => {
-            this.fullResponse = response.data;
+          .then(async response => {
             localStorage.setItem("accessToken", response.data["access_token"]);
-            this.AddUserToLocalStorage(this.email);     
-            this.$router.push("/Profile");      
+            await this.AddUserToLocalStorage(this.email);
+            this.$router.push("/Profile");
           })
           .catch(error => {
             console.warn(error);
@@ -179,7 +207,7 @@ export default {
         this.generalSnack = true;
       }
     },
-    
+
     AddUserToLocalStorage(loggedInEmail) {
       return axios
         .post("http://localhost:8000/api/GetUserByEmail", {
@@ -191,9 +219,6 @@ export default {
         })
         .catch(error => {
           console.warn(error);
-        })
-        .finally(() => {
-            this.$router.push("/Profile");
         });
     }
   }

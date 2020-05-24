@@ -11,7 +11,7 @@
             <v-spacer></v-spacer>
           </v-toolbar>
           <v-card-text>
-            <v-avatar size="64">
+            <v-avatar size="64" style="margin-left: 15px;">
               <img v-bind:src="require('../uploads/avatars/' + avatar)" />
             </v-avatar>
             <v-list-item class="float-right">
