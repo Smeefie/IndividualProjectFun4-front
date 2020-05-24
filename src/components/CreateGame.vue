@@ -11,68 +11,102 @@
             <v-spacer></v-spacer>
           </v-toolbar>
           <v-card-text>
+            <v-card-title class="justify-center">Create new game</v-card-title>
             <v-form>
-            <v-text-field
-                  id="roundLimit"
-                  label="Round Limit"
-                  name="roundLimit"
-                  v-model="roundLimit"
-                  :rules="limitRules"
-                  hint="Default is 15"
-                  style="padding: 15px 10px 0 10px"
-                ></v-text-field>
-            <v-col>
-              <v-autocomplete
-                v-model="selectedUsers"
-                :items="users"
-                :search-input.sync="search"
-                color="grey lighten-2"
-                placeholder="Select users"
-                item-text="name"
-                item-value="id"
-                chips
-                multiple
-                @change="EnableButton"
-                @input="search = ''"
-              >
-                <template v-slot:selection="data">
-                  <v-chip
-                    v-bind="data.attrs"
-                    :input-value="data.selected"
-                    close
-                    @click="data.select"
-                    @click:close="remove(data.item)"
-                  >
-                    <!-- <v-avatar left>
+              <v-text-field
+                id="roundLimit"
+                label="Round Limit"
+                name="roundLimit"
+                v-model="roundLimit"
+                :rules="limitRules"
+                hint="Default is 15"
+                style="padding: 15px 10px 0 10px"
+              ></v-text-field>
+              <v-col>
+                <v-autocomplete
+                  v-model="selectedUsers"
+                  :items="users"
+                  :search-input.sync="search"
+                  color="grey lighten-2"
+                  placeholder="Select users"
+                  item-text="name"
+                  item-value="id"
+                  chips
+                  multiple
+                  @change="EnableButton"
+                  @input="search = ''"
+                >
+                  <template v-slot:selection="data">
+                    <v-chip
+                      v-bind="data.attrs"
+                      :input-value="data.selected"
+                      close
+                      @click="data.select"
+                      @click:close="remove(data.item)"
+                    >
+                      <!-- <v-avatar left>
                       <v-img v-bind:src="require('../uploads/avatars/' + data.item.avatar)"></v-img>
-                    </v-avatar> -->
-                    {{ data.item.name }}
-                  </v-chip>
-                </template>
+                      </v-avatar>-->
+                      {{ data.item.name }}
+                    </v-chip>
+                  </template>
 
-                <template v-slot:item="data">
-                  <template v-if="typeof data.item !== 'object'">
-                    <v-list-item-content v-text="data.item"></v-list-item-content>
+                  <template v-slot:item="data">
+                    <template v-if="typeof data.item !== 'object'">
+                      <v-list-item-content v-text="data.item"></v-list-item-content>
+                    </template>
+                    <template v-else>
+                      <v-list-item-avatar>
+                        <img v-bind:src="require('../uploads/avatars/' + data.item.avatar)" />
+                      </v-list-item-avatar>
+                      <v-list-item-content>
+                        <v-list-item-title v-html="data.item.name"></v-list-item-title>
+                      </v-list-item-content>
+                    </template>
                   </template>
-                  <template v-else>
-                    <v-list-item-avatar>
-                      <img v-bind:src="require('../uploads/avatars/' + data.item.avatar)" />
-                    </v-list-item-avatar>
-                    <v-list-item-content>
-                      <v-list-item-title v-html="data.item.name"></v-list-item-title>
-                    </v-list-item-content>
-                  </template>
-                </template>
-              </v-autocomplete>
-            </v-col>
-            <v-card-actions class="justify-center">
-              <v-btn color="primary" :disabled="!buttonEnabled" @click="SubmitUsers">Start Game</v-btn>
-            </v-card-actions>
+                </v-autocomplete>
+              </v-col>
+              <v-card-actions class="justify-center">
+                <v-btn color="primary" :disabled="!buttonEnabled" @click="SubmitUsers">Start Game</v-btn>
+              </v-card-actions>
+            </v-form>
+
+            <v-spacer></v-spacer>
+
+            <v-card-title class="justify-center">Resume Existing Game</v-card-title>
+            <v-form>
+              <v-text-field
+                id="gameId"
+                label="Game Id"
+                name="gameId"
+                v-model="gameId"
+                :rules="resumeRules"
+                style="padding: 15px 10px 0 10px"
+                :counter="8"
+              ></v-text-field>
+              <v-card-actions class="justify-center">
+                <v-btn
+                  color="primary"
+                  :disabled="!resumeButtonEnabled"
+                  @click="resumeGame"
+                >Resume Game</v-btn>
+              </v-card-actions>
             </v-form>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
+
+    <v-snackbar
+      v-if="generalSnackText"
+      v-model="generalSnack"
+      :color="this.generalSnackColor"
+      :top="false"
+      :timeout="this.generalSnackTimeout"
+    >
+      {{ generalSnackText }}
+      <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
+    </v-snackbar>
   </v-content>
 </template>
 
@@ -90,18 +124,42 @@ export default {
   data() {
     return {
       buttonEnabled: false,
+      resumeButtonEnabled: false,
       search: "",
+      gameId: "",
       selectedUsers: [],
       users: [],
-      roundLimit: '',
+      roundLimit: "",
+
       limitRules: [
         value => {
           const pattern = /^[0-9]*$/;
           return pattern.test(value) || "Must be a number";
         }
       ],
+      resumeRules: [
+        value => {
+          const pattern = /^\d{8}$/;
+          return pattern.test(value) || "Must be 8 numbers";
+        }
+      ],
 
+      generalSnack: false,
+      generalSnackColor: "error",
+      generalSnackText: "",
+      generalSnackTimeout: 5000
     };
+  },
+
+  watch: {
+    gameId(newValue) {
+      const pattern = /^\d{8}$/;
+      if (pattern.test(newValue)) {
+        this.resumeButtonEnabled = true;
+      } else {
+        this.resumeButtonEnabled = false;
+      }
+    }
   },
 
   created() {
@@ -137,8 +195,11 @@ export default {
           this.users.push({ divider: true });
           this.users.push({ header: "Others" });
           this.fullResponse.forEach(element => {
-            this.users.push({ name: element["name"], id: element["id"],
-              avatar: 'default.png' });
+            this.users.push({
+              name: element["name"],
+              id: element["id"],
+              avatar: "default.png"
+            });
           });
         }
       });
@@ -146,9 +207,56 @@ export default {
 
   methods: {
     SubmitUsers() {
-      console.log(this.selectedUsers);
-        this.$router.push({path: `/Game?users=${JSON.stringify(this.selectedUsers)}&limit=${this.roundLimit == '' ? JSON.stringify(15) : JSON.stringify(parseInt(this.roundLimit))}`});
+      let gameId = -1;
+      axios
+        .post("http://localhost:8000/api/CreateGame", {
+          players: this.selectedUsers,
+          limit: 15
+        })
+        .then(response => {
+          console.log(response.data);
+          gameId = response.data;
+        })
+        .catch(error => {
+          console.log(error);
+        })
+        .finally(() => {
+          if (gameId != -1) {
+            this.$router.push({ path: `/Game?gameId=${gameId}` });
+          } else {
+            console.log("No Valid Game Id Found");
+          }
+        });
     },
+
+    resumeGame() {
+      axios
+        .post("http://localhost:8000/api/CheckIfGameExists", {
+          gameId: this.gameId
+        })
+        .then(async response => {
+          if (response.data == 1) {
+            await axios
+              .post("http://localhost:8000/api/GetGameStatus", {
+                gameId: this.gameId
+              })
+              .then(gameStatusResponse => {
+                if (gameStatusResponse.data == 0) {
+                  this.$router.push({ path: `/Game?gameId=${this.gameId}` });
+                } else {
+                  this.generateSnack("This game is not in progress anymore!");
+                }
+              });
+          } else {
+            this.generateSnack("This GameId does not exists!");
+          }
+        })
+        .catch(error => {
+          console.log(error);
+          this.generateSnack(error);
+        });
+    },
+
     EnableButton() {
       if (this.selectedUsers.length >= 2) {
         this.buttonEnabled = true;
@@ -156,6 +264,13 @@ export default {
         this.buttonEnabled = false;
       }
     },
+
+    generateSnack(text, color = "error") {
+      this.generalSnackText = text;
+      this.generalSnackColor = color;
+      this.generalSnack = true;
+    },
+
     remove(item) {
       const index = this.selectedUsers.indexOf(item.id);
       if (index >= 0) this.selectedUsers.splice(index, 1);

@@ -9,6 +9,9 @@
           <v-toolbar color="primary" dark flat>
             <v-toolbar-title>Current Game</v-toolbar-title>
             <v-spacer></v-spacer>
+            <template>
+              <v-btn color="accent" class="mb-2">Stop Game</v-btn>
+            </template>
           </v-toolbar>
 
           <v-card-text>
@@ -52,7 +55,7 @@
                       offset-y="12"
                       class="mr-5"
                     >
-                      <v-btn icon v-on="on" @click="item.knocked++" :disabled="item.disabled">
+                      <v-btn icon v-on="on" @click="item.knocked++" :disabled="item.disabled == 1">
                         <v-icon>mdi-boxing-glove</v-icon>
                       </v-btn>
                     </v-badge>
@@ -62,7 +65,7 @@
 
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" class="mr-2" @click="won(item, true)" :disabled="item.disabled">
+                    <v-btn icon v-on="on" class="mr-2" @click="won(item, true)" :disabled="item.disabled == 1">
                       <v-icon>mdi-cards</v-icon>
                     </v-btn>
                   </template>
@@ -70,7 +73,7 @@
                 </v-tooltip>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" class="mr-2" @click="won(item)" :disabled="item.disabled">
+                    <v-btn icon v-on="on" class="mr-2" @click="won(item)" :disabled="item.disabled == 1">
                       <v-icon>mdi-flag-checkered</v-icon>
                     </v-btn>
                   </template>
@@ -112,6 +115,7 @@ export default {
       users: [],
 
       //Game info
+      gameId: -1,
       gameRound: 0,
       scoreLimit: 10
     };
@@ -123,26 +127,35 @@ export default {
 
   methods: {
     initialize() {
-      console.log(JSON.parse(this.$route.query.users));
-      var userArray = JSON.parse(this.$route.query.users);
-      this.scoreLimit = JSON.parse(this.$route.query.limit);
+      this.gameId = JSON.parse(this.$route.query.gameId);
 
-      userArray.forEach(element => {
-        axios
+      axios
+      .post("http://localhost:8000/api/GetGameInfo", {
+        gameId: this.gameId
+      })
+      .then(async response => {
+        await response.data['players'].forEach(player => {
+          axios
           .post("http://localhost:8000/api/GetUserById", {
-            id: element
+            id: player['userId']
           })
-          .then(response => {
-            this.users.push({
-              id: response.data["id"],
-              name: response.data["name"],
-              avatar: response.data["avatar"],
-              score: 0,
+          .then(async userResponse => {
+            console.log()
+            await this.users.push({
+              id: userResponse.data["id"],
+              name: userResponse.data["name"],
+              avatar: userResponse.data["avatar"],
+              score: player['score'],
               knocked: 0,
-              disabled: false
+              disabled: player['status']
             });
           });
-      });
+        });
+
+        let gameInfo = response.data['info'];
+        this.gameRound = gameInfo['round'];
+        this.scoreLimit = gameInfo['limit'];
+      })
     },
 
     won(item, withJack = false) {
