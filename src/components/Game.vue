@@ -10,7 +10,7 @@
             <v-toolbar-title>Current Game</v-toolbar-title>
             <v-spacer></v-spacer>
             <template>
-              <v-btn color="accent" class="mb-2">Stop Game</v-btn>
+              <v-btn color="accent" class="mb-2" @click="updateGame">Save Game</v-btn>
             </template>
           </v-toolbar>
 
@@ -55,7 +55,7 @@
                       offset-y="12"
                       class="mr-5"
                     >
-                      <v-btn icon v-on="on" @click="item.knocked++" :disabled="item.disabled == 1">
+                      <v-btn icon v-on="on" @click="item.knocked++" :disabled="item.status == 1">
                         <v-icon>mdi-boxing-glove</v-icon>
                       </v-btn>
                     </v-badge>
@@ -65,7 +65,7 @@
 
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" class="mr-2" @click="won(item, true)" :disabled="item.disabled == 1">
+                    <v-btn icon v-on="on" class="mr-2" @click="won(item, true)" :disabled="item.status == 1">
                       <v-icon>mdi-cards</v-icon>
                     </v-btn>
                   </template>
@@ -73,7 +73,7 @@
                 </v-tooltip>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" class="mr-2" @click="won(item)" :disabled="item.disabled == 1">
+                    <v-btn icon v-on="on" class="mr-2" @click="won(item)" :disabled="item.status == 1">
                       <v-icon>mdi-flag-checkered</v-icon>
                     </v-btn>
                   </template>
@@ -117,6 +117,7 @@ export default {
       //Game info
       gameId: -1,
       gameRound: 0,
+      gameStatus: 0,
       scoreLimit: 10
     };
   },
@@ -147,7 +148,7 @@ export default {
               avatar: userResponse.data["avatar"],
               score: player['score'],
               knocked: 0,
-              disabled: player['status']
+              status: player['status']
             });
           });
         });
@@ -160,7 +161,7 @@ export default {
 
     won(item, withJack = false) {
       this.users.forEach(user => {
-        if (user.id != item.id && !user.disabled) {
+        if (user.id != item.id && user.status != 1) {
           if (!withJack) {
             user.score += 1 + user.knocked;
           } else {
@@ -182,7 +183,7 @@ export default {
     loserCheck() {
       this.users.forEach(user => {
         if (user.score >= this.scoreLimit) {
-          user.disabled = true;
+          user.status = true;
         }
       });
 
@@ -192,17 +193,37 @@ export default {
     winnerCheck() {
       let loserAmount = 0;
       this.users.forEach(user => {
-        if (user.disabled) loserAmount++;
+        if (user.status == 1) loserAmount++;
       });
 
       let winner = null;
       if (loserAmount >= this.users.length - 1) {
         winner = this.users.find(x => {
-          return x.disabled === false;
+          return x.status != 1;
         });
       }
 
-      if (winner != null) console.log(winner.id);
+      if (winner != null){
+        winner.status = 2;
+        this.gameStatus = 1;
+        console.log(winner.id);
+      } 
+    },
+
+    updateGame(){
+      axios
+      .post('http://localhost:8000/api/UpdateGame', {
+        gameId: this.gameId,
+        players: this.users,
+        status: this.gameStatus,
+        round: this.gameRound
+      })
+      .then(response =>{
+        console.log(response)
+      })
+      .catch(error => {
+        console.log(error);
+      })
     }
   }
 };

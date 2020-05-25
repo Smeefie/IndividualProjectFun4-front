@@ -130,6 +130,7 @@ export default {
       selectedUsers: [],
       users: [],
       roundLimit: "",
+      limitOkay: true,
 
       limitRules: [
         value => {
@@ -154,11 +155,14 @@ export default {
   watch: {
     gameId(newValue) {
       const pattern = /^\d{8}$/;
-      if (pattern.test(newValue)) {
-        this.resumeButtonEnabled = true;
-      } else {
-        this.resumeButtonEnabled = false;
-      }
+      this.resumeButtonEnabled = pattern.test(newValue) ? true : false;
+    },
+
+    roundLimit(newValue){
+      const pattern = /^[0-9]*$/;
+      this.limitOkay = pattern.test(newValue) ? true : false;
+
+      this.buttonEnabled = ((this.selectedUsers.length >= 2) && (this.limitOkay)) ? true : false;
     }
   },
 
@@ -211,7 +215,7 @@ export default {
       axios
         .post("http://localhost:8000/api/CreateGame", {
           players: this.selectedUsers,
-          limit: 15
+          limit: this.roundLimit == '' ? 15 : this.roundLimit
         })
         .then(response => {
           console.log(response.data);
@@ -258,7 +262,7 @@ export default {
     },
 
     EnableButton() {
-      if (this.selectedUsers.length >= 2) {
+      if (this.selectedUsers.length >= 2 && this.limitOkay) {
         this.buttonEnabled = true;
       } else {
         this.buttonEnabled = false;
