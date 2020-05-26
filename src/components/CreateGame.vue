@@ -158,17 +158,21 @@ export default {
       this.resumeButtonEnabled = pattern.test(newValue) ? true : false;
     },
 
-    roundLimit(newValue){
+    roundLimit(newValue) {
       const pattern = /^[0-9]*$/;
       this.limitOkay = pattern.test(newValue) ? true : false;
 
-      this.buttonEnabled = ((this.selectedUsers.length >= 2) && (this.limitOkay)) ? true : false;
+      this.buttonEnabled =
+        this.selectedUsers.length >= 2 && this.limitOkay ? true : false;
     }
   },
 
   created() {
     this.users = [];
     var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    this.users.push({header: 'Self'});
+    this.users.push({name: loggedInUser['name'], id: loggedInUser['id'], avatar: loggedInUser['avatar']});
+    this.users.push({ divider: true });
     axios
       .post("http://localhost:8000/api/GetAllFriends", {
         id: loggedInUser["id"]
@@ -215,10 +219,10 @@ export default {
       axios
         .post("http://localhost:8000/api/CreateGame", {
           players: this.selectedUsers,
-          limit: this.roundLimit == '' ? 15 : this.roundLimit
+          limit: this.roundLimit == "" ? 15 : this.roundLimit,
+          loggedInId: JSON.parse(localStorage.getItem("loggedInUser"))["id"]
         })
         .then(response => {
-          console.log(response.data);
           gameId = response.data;
         })
         .catch(error => {
@@ -234,6 +238,8 @@ export default {
     },
 
     resumeGame() {
+      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
       axios
         .post("http://localhost:8000/api/CheckIfGameExists", {
           gameId: this.gameId
@@ -241,14 +247,40 @@ export default {
         .then(async response => {
           if (response.data == 1) {
             await axios
-              .post("http://localhost:8000/api/GetGameStatus", {
+              .post("http://localhost:8000/api/GetGameById", {
                 gameId: this.gameId
               })
-              .then(gameStatusResponse => {
-                if (gameStatusResponse.data == 0) {
-                  this.$router.push({ path: `/Game?gameId=${this.gameId}` });
-                } else {
+              .then(async gameResponse => {
+                if (gameResponse.data["status"] == 1) {
                   this.generateSnack("This game is not in progress anymore!");
+                } else {
+                  await axios
+                    .post("http://localhost:8000/api/GetAllGamePlayers", {
+                      gameId: this.gameId
+                    })
+                    .then(playersResponse => {
+                      var userInGame = false;
+                      for (var i = 0; i < playersResponse.data.length; i++) {
+                        let player = playersResponse.data[i];
+                        if (player["userId"] == loggedInUser["id"]) {
+                          userInGame = true;
+                          break;
+                        }
+                      }
+
+                      if (
+                        !userInGame &&
+                        gameResponse.data["creatorId"] != loggedInUser["id"]
+                      ) {
+                        this.generateSnack(
+                          "You do not have access to this game!"
+                        );
+                      } else {
+                        this.$router.push({
+                          path: `/Game?gameId=${this.gameId}`
+                        });
+                      }
+                    });
                 }
               });
           } else {

@@ -38,7 +38,7 @@
           </v-list-item-content>
         </v-list-item>
 
-        <v-list-item link to :active="$router.name==''">
+        <v-list-item link to="/Statistics" :active="$router.name=='Statistics'">
           <v-list-item-action>
             <v-icon>mdi-chart-bar</v-icon>
           </v-list-item-action>

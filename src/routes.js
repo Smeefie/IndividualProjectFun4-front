@@ -7,6 +7,7 @@ import Profile from './components/Profile.vue';
 import Friends from './components/Friends.vue';
 import CreateGame from './components/CreateGame.vue';
 import Game from './components/Game.vue';
+import Statistics from './components/Statistics.vue';
 
 Vue.use(Router);
 
@@ -39,6 +40,11 @@ const routes = [{
         path: '/CreateGame',
         name: 'CreateGame',
         component: CreateGame
+    },
+    {
+        path: '/Statistics',
+        name: 'Statistics',
+        component: Statistics
     }
 ]
 
