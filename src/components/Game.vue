@@ -17,14 +17,14 @@
           <v-card-text>
             <v-card-title class="justify-center">Game Info</v-card-title>
             <v-col>
-                <v-row>
-                  <v-col class="text-end">Round:</v-col>
-                  <v-col class="text-start">{{gameRound}}</v-col>
-                </v-row>
-                <v-row>
-                  <v-col class="text-end">Limit:</v-col>
-                  <v-col class="text-start">{{scoreLimit}}</v-col>
-                </v-row>
+              <v-row>
+                <v-col class="text-end">Round:</v-col>
+                <v-col class="text-start">{{gameRound}}</v-col>
+              </v-row>
+              <v-row>
+                <v-col class="text-end">Limit:</v-col>
+                <v-col class="text-start">{{scoreLimit}}</v-col>
+              </v-row>
             </v-col>
           </v-card-text>
 
@@ -128,12 +128,11 @@ export default {
         {
           text: "Name",
           align: "start",
-          value: "name"
-          , sortable: false 
+          value: "name",
+          sortable: false
         },
-        { text: "Score", value: "score", align: "center"},
-        {text: '', align: "end", value:"statusLabel", sortable: false },
-        // { text: "Knocked", value: "knocked", align: "end", sortable: false },
+        { text: "Score", value: "score", align: "center" },
+        { text: "", align: "end", value: "statusLabel", sortable: false },
         { text: "Actions", value: "actions", align: "end", sortable: false }
       ],
       users: [],
@@ -166,11 +165,11 @@ export default {
                 id: player["userId"]
               })
               .then(async userResponse => {
-                let label = '';
-                if(player['status'] == 1){
-                  label = 'ELIMINATED'
-                } else if(player['status'] == 2){
-                  label = 'WINNER'
+                let label = "";
+                if (player["status"] == 1) {
+                  label = "ELIMINATED";
+                } else if (player["status"] == 2) {
+                  label = "WINNER";
                 }
                 await this.users.push({
                   id: userResponse.data["id"],
@@ -228,7 +227,7 @@ export default {
       this.users.forEach(user => {
         if (user.score >= this.scoreLimit) {
           user.status = true;
-          user.statusLabel = "ELIMINATED"
+          user.statusLabel = "ELIMINATED";
         }
       });
 
@@ -251,7 +250,7 @@ export default {
       if (winner != null) {
         winner.status = 2;
         this.gameStatus = 1;
-        winner.statusLabel = 'WINNER';
+        winner.statusLabel = "WINNER";
       }
     },
 
@@ -270,20 +269,23 @@ export default {
           gameId: this.gameId,
           players: this.users,
           status: this.gameStatus,
-          round: this.gameRound,
+          round: this.gameRound
         })
         .catch(error => {
           console.log(error);
         });
     },
 
-    updateRound(item, withJack = false){
+    updateRound(item, withJack = false) {
       axios
         .post("http://localhost:8000/api/UpdateRounds", {
           gameId: this.gameId,
           winner: item.id,
           withJack: withJack,
-          roundObject: {'roundInfo': {'roundNr': this.gameRound}, 'playerInfo': this.users}
+          roundObject: {
+            roundInfo: { roundNr: this.gameRound },
+            playerInfo: this.users
+          }
         })
         .catch(error => {
           console.log(error);

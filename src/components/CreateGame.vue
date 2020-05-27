@@ -97,28 +97,22 @@
       </v-col>
     </v-row>
 
-    <v-snackbar
-      v-if="generalSnackText"
-      v-model="generalSnack"
-      :color="this.generalSnackColor"
-      :top="false"
-      :timeout="this.generalSnackTimeout"
-    >
-      {{ generalSnackText }}
-      <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
-    </v-snackbar>
+    <SnackBar ref="SnackBar" />
   </v-content>
 </template>
 
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
+import SnackBar from "@/components/SnackBar";
 import axios from "axios";
 
 export default {
+  name: "CreateGame",
   components: {
     Navbar,
-    Authorized
+    Authorized,
+    SnackBar
   },
 
   data() {
@@ -144,11 +138,6 @@ export default {
           return pattern.test(value) || "Must be 8 numbers";
         }
       ],
-
-      generalSnack: false,
-      generalSnackColor: "error",
-      generalSnackText: "",
-      generalSnackTimeout: 5000
     };
   },
 
@@ -173,8 +162,9 @@ export default {
     this.users.push({header: 'Self'});
     this.users.push({name: loggedInUser['name'], id: loggedInUser['id'], avatar: loggedInUser['avatar']});
     this.users.push({ divider: true });
+    
     axios
-      .post("http://localhost:8000/api/GetAllFriends", {
+      .get("http://localhost:8000/api/GetAllFriends", {
         id: loggedInUser["id"]
       })
       .then(response => {
@@ -252,7 +242,7 @@ export default {
               })
               .then(async gameResponse => {
                 if (gameResponse.data["status"] == 1) {
-                  this.generateSnack("This game is not in progress anymore!");
+                  this.$refs.SnackBar.GenerateSnack("This game is not in progress anymore!");
                 } else {
                   await axios
                     .post("http://localhost:8000/api/GetAllGamePlayers", {
@@ -272,7 +262,7 @@ export default {
                         !userInGame &&
                         gameResponse.data["creatorId"] != loggedInUser["id"]
                       ) {
-                        this.generateSnack(
+                        this.$refs.SnackBar.GenerateSnack(
                           "You do not have access to this game!"
                         );
                       } else {
@@ -284,12 +274,12 @@ export default {
                 }
               });
           } else {
-            this.generateSnack("This GameId does not exists!");
+            this.$refs.SnackBar.GenerateSnack("This GameId does not exists!");
           }
         })
         .catch(error => {
           console.log(error);
-          this.generateSnack(error);
+          this.$refs.SnackBar.GenerateSnack(error);
         });
     },
 
@@ -299,12 +289,6 @@ export default {
       } else {
         this.buttonEnabled = false;
       }
-    },
-
-    generateSnack(text, color = "error") {
-      this.generalSnackText = text;
-      this.generalSnackColor = color;
-      this.generalSnack = true;
     },
 
     remove(item) {

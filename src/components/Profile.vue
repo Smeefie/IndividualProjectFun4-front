@@ -45,11 +45,16 @@
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
+import { mapGetters } from "vuex";
 
 export default {
   components: {
     Navbar,
     Authorized
+  },
+
+  computed: {
+    ...mapGetters(['GetLoggedInUser'])
   },
 
   data() {
@@ -67,7 +72,7 @@ export default {
   },
 
   created() {
-    var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    let loggedInUser = JSON.parse(this.GetLoggedInUser);
     this.username = loggedInUser["name"];
     this.avatar = loggedInUser["avatar"];
   },
