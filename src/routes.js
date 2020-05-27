@@ -8,6 +8,8 @@ import Friends from './components/Friends.vue';
 import CreateGame from './components/CreateGame.vue';
 import Game from './components/Game.vue';
 import Statistics from './components/Statistics.vue';
+import MatchHistory from './components/MatchHistory.vue';
+import MatchDetails from './components/MatchDetails.vue';
 
 Vue.use(Router);
 
@@ -45,6 +47,17 @@ const routes = [{
         path: '/Statistics',
         name: 'Statistics',
         component: Statistics
+    },
+    {
+        path: '/MatchHistory',
+        name: 'MatchHistory',
+        component: MatchHistory
+    },
+    {
+        path: '/MatchHistory/:gameId',
+        props: true,
+        name: 'MatchDetails',
+        component: MatchDetails
     }
 ]
 

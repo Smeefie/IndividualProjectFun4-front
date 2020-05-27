@@ -16,30 +16,16 @@
 
           <v-card-text>
             <v-card-title class="justify-center">Game Info</v-card-title>
-            <v-row>
-              <v-col cols="12" sm="6" md="6" class="text-center">
-                <v-card-subtitle style="font-size: 1.5em">General</v-card-subtitle>
+            <v-col>
                 <v-row>
                   <v-col class="text-end">Round:</v-col>
-                  <v-col class="text-center">{{gameRound}}</v-col>
+                  <v-col class="text-start">{{gameRound}}</v-col>
                 </v-row>
                 <v-row>
                   <v-col class="text-end">Limit:</v-col>
-                  <v-col class="text-center">{{scoreLimit}}</v-col>
+                  <v-col class="text-start">{{scoreLimit}}</v-col>
                 </v-row>
-              </v-col>
-              <v-col cols="12" sm="6" md="6" class="text-center">
-                <v-card-subtitle style="font-size: 1.5em">Test</v-card-subtitle>
-                <v-row>
-                  <v-col class="text-end">Round:</v-col>
-                  <v-col class="text-center">3</v-col>
-                </v-row>
-                <v-row>
-                  <v-col class="text-end">Limit:</v-col>
-                  <v-col class="text-center">15</v-col>
-                </v-row>
-              </v-col>
-            </v-row>
+            </v-col>
           </v-card-text>
 
           <v-card-text>
@@ -59,7 +45,7 @@
                         icon
                         v-on="on"
                         @click="item.knocked++; item.timesKnocked++"
-                        :disabled="item.status == 1"
+                        :disabled="item.status != 0"
                       >
                         <v-icon>mdi-boxing-glove</v-icon>
                       </v-btn>
@@ -75,7 +61,7 @@
                       v-on="on"
                       class="mr-2"
                       @click="won(item, true)"
-                      :disabled="item.status == 1"
+                      :disabled="item.status != 0"
                     >
                       <v-icon>mdi-cards</v-icon>
                     </v-btn>
@@ -89,7 +75,7 @@
                       v-on="on"
                       class="mr-2"
                       @click="won(item)"
-                      :disabled="item.status == 1"
+                      :disabled="item.status != 0"
                     >
                       <v-icon>mdi-flag-checkered</v-icon>
                     </v-btn>
@@ -143,16 +129,19 @@ export default {
           text: "Name",
           align: "start",
           value: "name"
+          , sortable: false 
         },
-        { text: "Score", value: "score", align: "center" },
+        { text: "Score", value: "score", align: "center"},
+        {text: '', align: "end", value:"statusLabel", sortable: false },
         // { text: "Knocked", value: "knocked", align: "end", sortable: false },
         { text: "Actions", value: "actions", align: "end", sortable: false }
       ],
       users: [],
+      rounds: [],
 
       //Game info
       gameId: -1,
-      gameRound: 0,
+      gameRound: 1,
       gameStatus: 0,
       scoreLimit: 10
     };
@@ -177,6 +166,12 @@ export default {
                 id: player["userId"]
               })
               .then(async userResponse => {
+                let label = '';
+                if(player['status'] == 1){
+                  label = 'ELIMINATED'
+                } else if(player['status'] == 2){
+                  label = 'WINNER'
+                }
                 await this.users.push({
                   id: userResponse.data["id"],
                   name: userResponse.data["name"],
@@ -186,7 +181,8 @@ export default {
                   timesKnocked: player["timesKnocked"],
                   roundsWon: player["roundsWon"],
                   roundsWonWithJack: player["roundsWonWithJack"],
-                  status: player["status"]
+                  status: player["status"],
+                  statusLabel: label
                 });
               });
           });
@@ -197,7 +193,9 @@ export default {
         });
     },
 
-    won(item, withJack = false) {
+    async won(item, withJack = false) {
+      await this.updateRound(item, withJack);
+
       this.users.forEach(user => {
         if (user.id != item.id && user.status != 1) {
           if (!withJack) {
@@ -230,6 +228,7 @@ export default {
       this.users.forEach(user => {
         if (user.score >= this.scoreLimit) {
           user.status = true;
+          user.statusLabel = "ELIMINATED"
         }
       });
 
@@ -252,7 +251,7 @@ export default {
       if (winner != null) {
         winner.status = 2;
         this.gameStatus = 1;
-        console.log(winner.id);
+        winner.statusLabel = 'WINNER';
       }
     },
 
@@ -271,7 +270,20 @@ export default {
           gameId: this.gameId,
           players: this.users,
           status: this.gameStatus,
-          round: this.gameRound
+          round: this.gameRound,
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+
+    updateRound(item, withJack = false){
+      axios
+        .post("http://localhost:8000/api/UpdateRounds", {
+          gameId: this.gameId,
+          winner: item.id,
+          withJack: withJack,
+          roundObject: {'roundInfo': {'roundNr': this.gameRound}, 'playerInfo': this.users}
         })
         .catch(error => {
           console.log(error);

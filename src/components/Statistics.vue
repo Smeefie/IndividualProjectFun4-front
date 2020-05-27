@@ -133,18 +133,22 @@ export default {
       .then(async playersResponse => {
         if (playersResponse.data.length > 0) {
           this.gamePlayers = playersResponse.data;
-          for (let gameIdPlayer of this.gamePlayers) {
-            await axios
-              .post("http://localhost:8000/api/GetGameById", {
-                gameId: gameIdPlayer["gameId"]
-              })
-              .then(gamesResponse => {
-                this.games.push(gamesResponse.data);
-              })
-              .catch(error => {
-                console.log(error);
-              });
-          }
+
+          let gameIdPlayerArray = [];
+          this.gamePlayers.forEach(GP => {
+            gameIdPlayerArray.push(GP["gameId"]);
+          });
+
+          await axios
+            .post("http://localhost:8000/api/GetGameByIdArray", {
+              gameIdArray: gameIdPlayerArray
+            })
+            .then(gamesResponse => {
+              this.games = gamesResponse.data;
+            })
+            .catch(error => {
+              console.log(error);
+            });
         } else {
           this.showStats = false;
         }
@@ -236,8 +240,7 @@ export default {
       let roundsPlayed = this.games.reduce((a, b) => a + (b["round"] || 0), 0);
       let ratio =
         Math.round(
-          ((this.roundsWon / roundsPlayed) * 100 + Number.EPSILON) * 100
-        ) / 100;
+          ((this.roundsWon / roundsPlayed) + Number.EPSILON) * 100) / 100;
       this.roundWLRatio = ratio;
 
       if (this.showConsole) console.log("Round Ratio = " + ratio);

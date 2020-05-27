@@ -38,6 +38,15 @@
           </v-list-item-content>
         </v-list-item>
 
+        <v-list-item link to="/MatchHistory" :active="$router.name=='MatchHistory'">
+          <v-list-item-action>
+            <v-icon>mdi-history</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Match History</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+
         <v-list-item link to="/Statistics" :active="$router.name=='Statistics'">
           <v-list-item-action>
             <v-icon>mdi-chart-bar</v-icon>
