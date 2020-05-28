@@ -105,6 +105,7 @@
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
 import SnackBar from "@/components/SnackBar";
+import { mapGetters, mapActions } from "vuex";
 import axios from "axios";
 
 export default {
@@ -137,7 +138,7 @@ export default {
           const pattern = /^\d{8}$/;
           return pattern.test(value) || "Must be 8 numbers";
         }
-      ],
+      ]
     };
   },
 
@@ -156,31 +157,33 @@ export default {
     }
   },
 
+  computed: {
+    ...mapGetters(["GetFriends"])
+  },
+
   created() {
     this.users = [];
     var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    this.users.push({header: 'Self'});
-    this.users.push({name: loggedInUser['name'], id: loggedInUser['id'], avatar: loggedInUser['avatar']});
+    this.users.push({ header: "Self" });
+    this.users.push({
+      name: loggedInUser["name"],
+      id: loggedInUser["id"],
+      avatar: loggedInUser["avatar"]
+    });
     this.users.push({ divider: true });
-    
-    axios
-      .get("http://localhost:8000/api/GetAllFriends", {
-        id: loggedInUser["id"]
-      })
-      .then(response => {
-        this.fullResponse = response.data;
 
-        if (this.fullResponse.length > 0) {
-          this.users.push({ header: "Friends" });
-          this.fullResponse.forEach(element => {
-            this.users.push({
-              name: element["name"],
-              id: element["id"],
-              avatar: element["avatar"]
-            });
-          });
-        }
+    this.GetAllFriends({id: loggedInUser["id"]});
+
+    if (this.GetFriends > 0) {
+      this.users.push({ header: "Friends" });
+      this.GetFriends.forEach(element => {
+        this.users.push({
+          name: element["name"],
+          id: element["id"],
+          avatar: element["avatar"]
+        });
       });
+    }
 
     axios
       .post("http://localhost:8000/api/GetAllUsersNotFriends", {
@@ -204,6 +207,7 @@ export default {
   },
 
   methods: {
+    ...mapActions(["GetAllFriends"]),
     SubmitUsers() {
       let gameId = -1;
       axios
@@ -242,7 +246,9 @@ export default {
               })
               .then(async gameResponse => {
                 if (gameResponse.data["status"] == 1) {
-                  this.$refs.SnackBar.GenerateSnack("This game is not in progress anymore!");
+                  this.$refs.SnackBar.GenerateSnack(
+                    "This game is not in progress anymore!"
+                  );
                 } else {
                   await axios
                     .post("http://localhost:8000/api/GetAllGamePlayers", {

@@ -72,7 +72,7 @@ export default {
   },
 
   created() {
-    let loggedInUser = JSON.parse(this.GetLoggedInUser);
+    let loggedInUser = this.GetLoggedInUser;
     this.username = loggedInUser["name"];
     this.avatar = loggedInUser["avatar"];
   },

@@ -1,11 +1,11 @@
 <template>
   <v-content>
     <Authorized />
-    <Navbar />
+    <Navbar ref="NavBar" />
 
-    <v-row align="center" justify="center">
+    <v-row align="center" justify="center" v-if="!loading">
       <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-12" v-if="!loading">
+        <v-card class="elevation-12">
           <v-toolbar color="primary" dark flat>
             <v-toolbar-title>Friends</v-toolbar-title>
             <v-spacer></v-spacer>
@@ -177,17 +177,6 @@
       </v-col>
     </v-row>
 
-    <v-snackbar
-      v-if="generalSnackText"
-      v-model="generalSnack"
-      :color="this.generalSnackColor"
-      :top="false"
-      :timeout="this.generalSnackTimeout"
-    >
-      {{ generalSnackText }}
-      <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
-    </v-snackbar>
-
     <v-container v-else-if="loading" fill-height fluid class="justify-center align-center">
       <v-layout row wrap align-center>
         <v-row align="center" justify="center">
@@ -195,18 +184,22 @@
         </v-row>
       </v-layout>
     </v-container>
+
+    <SnackBar ref="SnackBar" />
   </v-content>
 </template>
 
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
-import axios from "axios";
+import SnackBar from "@/components/SnackBar";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   components: {
     Navbar,
-    Authorized
+    Authorized,
+    SnackBar
   },
 
   data() {
@@ -218,13 +211,7 @@ export default {
       friends: [],
       friendRequests: [],
       currentFriends: [],
-      users: [],
-      loggedInUser: JSON.parse(localStorage.getItem("loggedInUser")),
-
-      generalSnack: false,
-      generalSnackColor: "error",
-      generalSnackText: "",
-      generalSnackTimeout: 5000
+      users: []
     };
   },
 
@@ -243,16 +230,34 @@ export default {
     }
   },
 
+  computed: {
+    ...mapGetters([
+      "GetLoggedInUser",
+      "GetFriends",
+      "GetUser",
+      "GetUsersNotFriends",
+      "GetAllFriendRequests",
+      "GetFriendRequest",
+      "GetAddedFriend"
+    ])
+  },
+
   methods: {
+    ...mapActions([
+      "GetAllFriendsById",
+      "GetAllUsersNotFriendsById",
+      "GetAllFriendRequestsById",
+      "GetUserById",
+      "GetFriendRequestById",
+      "AcceptFriend",
+      "DeclineFriend",
+      "AddFriend",
+      "RemoveFriend"
+    ]),
+
     remove(item) {
       const index = this.friends.indexOf(item.name);
       if (index >= 0) this.friends.splice(index, 1);
-    },
-
-    generateSnack(text, color = "error") {
-      this.generalSnackText = text;
-      this.generalSnackColor = color;
-      this.generalSnack = true;
     },
 
     //#region Update and fill lists
@@ -260,13 +265,10 @@ export default {
     fillUserList() {
       this.users = [];
 
-      axios
-        .post("http://localhost:8000/api/GetAllUsersNotFriends", {
-          id: this.loggedInUser["id"]
-        })
-        .then(response => {
-          response.data.forEach(element => {
-            if (this.loggedInUser["id"] != element["id"])
+      this.GetAllUsersNotFriendsById({ id: this.GetLoggedInUser["id"] })
+        .then(() => {
+          this.GetUsersNotFriends.forEach(element => {
+            if (this.GetLoggedInUser["id"] != element["id"])
               this.addToList(this.users, element);
           });
         })
@@ -278,14 +280,12 @@ export default {
     fillFriendsList() {
       this.currentFriends = [];
 
-      axios
-        .post("http://localhost:8000/api/GetAllFriends", {
-          id: this.loggedInUser["id"]
-        })
-        .then(response => {
-          response.data.forEach(element => {
-            if (this.loggedInUser["id"] != element["id"])
+      this.GetAllFriendsById({ id: this.GetLoggedInUser["id"] })
+        .then(() => {
+          this.GetFriends.forEach(element => {
+            if (this.GetLoggedInUser["id"] != element["id"]) {
               this.addToList(this.currentFriends, element, true);
+            }
           });
         })
         .finally(() => {
@@ -296,27 +296,15 @@ export default {
     fillRequestsList() {
       this.friendRequests = [];
 
-      axios
-        .post("http://localhost:8000/api/GetAllFriendRequests", {
-          id: this.loggedInUser["id"]
-        })
-        .then(response => {
-          response.data.forEach(element => {
-            axios
-              .post("http://localhost:8000/api/GetUserById", {
-                id: element["requester"]
-              })
-              .then(userResponse => {
-                this.addToList(this.friendRequests, userResponse.data);
-              })
-              .finally(() => {
-                this.loadingState++;
-              });
-          });
-
-          if (response.data.length <= 0) {
-            this.loadingState++;
+      this.GetAllUsersNotFriendsById({ id: this.GetLoggedInUser["id"] })
+        .then(async () => {
+          for (let element of this.GetAllFriendRequests) {
+            await this.GetUserById({ id: element["requester"] });
+            this.addToList(this.friendRequests, this.GetUser);
           }
+        })
+        .finally(() => {
+          this.loadingState++;
         });
     },
 
@@ -330,19 +318,17 @@ export default {
     //ADDING AND REMOVING FROM LISTS
     addToList(list, userToAdd, withStatus = false) {
       if (withStatus) {
-        axios
-          .post("http://localhost:8000/api/GetFriendRequest", {
-            id: this.loggedInUser["id"],
-            friendId: userToAdd.id
-          })
-          .then(response => {
-            list.push({
-              name: userToAdd["name"],
-              id: userToAdd["id"],
-              avatar: userToAdd["avatar"],
-              status: response.data["status"]
-            });
+        this.GetFriendRequestById({
+          id: this.GetLoggedInUser["id"],
+          friendId: userToAdd.id
+        }).then(() => {
+          list.push({
+            name: userToAdd["name"],
+            id: userToAdd["id"],
+            avatar: userToAdd["avatar"],
+            status: this.GetFriendRequest["status"]
           });
+        });
       } else {
         list.push({
           name: userToAdd["name"],
@@ -369,88 +355,85 @@ export default {
 
     //#region Adding, Removing, Accepting and Declining
     acceptRequest(user) {
-      axios
-        .post("http://localhost:8000/api/AcceptFriend", {
-          id: this.loggedInUser["id"],
-          friendId: user.id
-        })
+      this.AcceptFriend({
+        id: this.GetLoggedInUser["id"],
+        friendId: user.id
+      })
         .then(() => {
           this.addToList(this.currentFriends, user, true);
 
           this.removeFromList(this.friendRequests, user);
           this.removeFromList(this.users, user);
-
-          this.generateSnack(`Accepted ${user.name} as a friend.`, "primary");
-        })
-        .catch(error => {
-          this.generateSnack(error.message);
-        });
-    },
-
-    declineRequest(user) {
-      axios
-        .post("http://localhost:8000/api/DeclineFriend", {
-          id: this.loggedInUser["id"],
-          friendId: user.id
-        })
-        .then(() => {
-          this.removeFromList(this.friendRequests, user);
-
-          this.generateSnack(`Declined ${user.name} as a friend.`, "primary");
-        })
-        .catch(error => {
-          this.generateSnack(error.message);
-        });
-    },
-
-    addFriend() {
-      axios
-        .post("http://localhost:8000/api/AddFriend", {
-          id: this.loggedInUser["id"],
-          friendId: this.friends
-        })
-        .then(response => {
-          this.fullResponse = response.data;
-          axios
-            .post("http://localhost:8000/api/GetUserById", {
-              id: this.fullResponse["userRequested"]
-            })
-            .then(userResponse => {
-              this.addToList(this.currentFriends, userResponse.data, true);
-              this.removeFromList(this.users, userResponse.data);
-              this.generateSnack(
-                `Successfully added ${userResponse.data["name"]} as a friend.`,
-                "primary"
-              );
-
-              this.removeFromList(this.friendRequests, userResponse.data);
-            });
-          // .finally(() => {
-          //   this.fillRequestsList();
-          // });
-        })
-        .catch(error => {
-          this.generateSnack(error.message);
-        });
-    },
-
-    removeFriend(friend) {
-      axios
-        .post("http://localhost:8000/api/RemoveFriend", {
-          id: this.loggedInUser["id"],
-          friendId: friend.id
-        })
-        .then(() => {
-          this.addToList(this.users, friend);
-          this.removeFromList(this.currentFriends, friend);
-          this.friends = [];
-          this.generateSnack(
-            `Successfully removed "${friend.name} as a friend.`,
+          this.$refs.NavBar.updateBadges();
+          this.$refs.SnackBar.GenerateSnack(
+            `Accepted ${user.name} as a friend.`,
             "primary"
           );
         })
         .catch(error => {
-          this.generateSnack(error.message);
+          this.$refs.SnackBar.GenerateSnack(error.message);
+        });
+    },
+
+    declineRequest(user) {
+      this.DeclineFriend({
+        id: this.GetLoggedInUser["id"],
+        friendId: user.id
+      })
+        .then(() => {
+          this.removeFromList(this.friendRequests, user);
+          this.$refs.NavBar.updateBadges();
+          this.$refs.SnackBar.GenerateSnack(
+            `Declined ${user.name} as a friend.`,
+            "primary"
+          );
+        })
+        .catch(error => {
+          this.$refs.SnackBar.GenerateSnack(error.message);
+        });
+    },
+
+    addFriend() {
+      this.AddFriend({
+        id: this.GetLoggedInUser["id"],
+        friendId: this.friends
+      })
+        .then(() => {
+          this.GetUserById({
+            id: this.GetAddedFriend["userRequested"]
+          }).then(() => {
+            this.addToList(this.currentFriends, this.GetUser, true);
+            this.removeFromList(this.users, this.GetUser);
+            this.$refs.SnackBar.GenerateSnack(
+              `Successfully added ${this.GetUser["name"]} as a friend.`,
+              "primary"
+            );
+
+            this.removeFromList(this.friendRequests, this.GetUser);
+            this.$refs.NavBar.updateBadges();
+          });
+        })
+        .catch(error => {
+          this.$refs.SnackBar.GenerateSnack(error.message);
+        });
+    },
+
+    removeFriend(friend) {
+      this.RemoveFriend({
+        id: this.GetLoggedInUser["id"],
+        friendId: friend.id
+      })
+        .then(() => {
+          this.addToList(this.users, friend);
+          this.removeFromList(this.currentFriends, friend);
+          this.friends = [];
+          this.$refs.SnackBar.GenerateSnack(
+            `Successfully removed ${friend.name} as a friend.`,
+            "primary"
+          );
+        })
+        .catch(error => {
+          this.$refs.SnackBar.GenerateSnack(error.message);
         });
     }
     //#endregion

@@ -14,7 +14,7 @@
 
         <v-list-item link to="/Friends" :active="$router.name=='Friends'">
           <v-list-item-action>
-            <v-badge :content="requests" :value="requests" overlap color="accent">
+            <v-badge :content="this.GetAllFriendRequests.length" :value="this.GetAllFriendRequests.length" overlap color="accent">
               <v-icon>mdi-account-multiple</v-icon>
             </v-badge>
           </v-list-item-action>
@@ -107,11 +107,15 @@
 
 <script>
 import ToggleDarkmode from "@/components/ToggleDarkmode";
-import axios from "axios";
+import {mapGetters, mapActions} from 'vuex';
 
 export default {
   components: {
     ToggleDarkmode
+  },
+
+  computed: {
+    ...mapGetters(['GetAllFriendRequests', 'GetLoggedInUser'])
   },
 
   data() {
@@ -127,6 +131,7 @@ export default {
   },
 
   methods: {
+    ...mapActions(['GetAllFriendRequestsById']),
     Logout() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("loggedInUser");
@@ -136,15 +141,9 @@ export default {
       this.$vuetify.theme.dark = this.$vuetify.theme.dark ? false : true;
     },
     updateBadges() {
-      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-
-      axios
-        .post("http://localhost:8000/api/GetAllFriendRequests", {
-          id: loggedInUser["id"]
-        })
-        .then(response => {
-          this.requests = response.data.length;
-        });
+      this.GetAllFriendRequestsById({
+        id: this.GetLoggedInUser['id']
+      })
     }
   }
 };

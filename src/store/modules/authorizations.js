@@ -4,7 +4,7 @@ axios.defaults.baseURL = 'http://localhost:8000/api' //process.env.VUE_APP_API_U
 
 const state = {
     token: localStorage.getItem('accessToken'),
-    loggedInUser: localStorage.getItem("loggedInUser"),
+    loggedInUser: JSON.parse(localStorage.getItem("loggedInUser")),
 };
 
 const getters = {
@@ -23,6 +23,9 @@ const actions = {
                 localStorage.setItem("accessToken", response.data['accessToken']);
                 context.commit('SetAccessToken', response.data['accessToken']);
             })
+            .catch(error => {
+                console.log(error.data);
+            })
     },
 
     RegisterUser(context, credentials) {
@@ -37,13 +40,21 @@ const actions = {
                 localStorage.setItem("accessToken", response.data["accessToken"]);
                 context.commit('GetAccessToken', response.data['accessToken']);
             })
+            .catch(error => {
+                console.log(error.data);
+            })
     },
     UploadUser(context, credentials) {
         return axios
-            .get(`/GetUserByEmail/${credentials.email}`)
+            .get('/GetUserByEmail', {
+                params: { email: credentials.email }
+            })
             .then(response => {
                 localStorage.setItem("loggedInUser", JSON.stringify(response.data));
                 context.commit('SetLoggedInUser', JSON.stringify(response.data));
+            })
+            .catch(error => {
+                console.log(error.data);
             })
 
 
