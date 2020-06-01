@@ -32,7 +32,7 @@ const actions = {
     RegisterUser(context, credentials) {
         return axios
             .post("/Register", {
-                name: credentials.username,
+                name: credentials.name,
                 email: credentials.email,
                 password: credentials.password,
                 password_confirmation: credentials.password_confirmation

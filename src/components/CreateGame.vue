@@ -181,7 +181,7 @@ export default {
       "GetGameById",
       "GetAllGamePlayersByGameId"
     ]),
-    Initialize() {
+    async Initialize() {
       //ADD YOURSELF TO THE LIST
       this.users.push({ header: "Self" });
       this.users.push({
@@ -191,7 +191,7 @@ export default {
       });
 
       //ADD ALL YOUR FRIENDS TO THE LIST
-      this.GetAllFriendsById({
+      await this.GetAllFriendsById({
         id: this.GetLoggedInUser["id"]
       }).then(() => {
         if (this.GetFriends.length > 0) {
@@ -208,7 +208,7 @@ export default {
       });
 
       //ADD ALL OTHER USERS TO THE LIST
-      this.GetAllUsersNotFriendsById({
+      await this.GetAllUsersNotFriendsById({
         id: this.GetLoggedInUser["id"]
       }).then(() => {
         if (this.GetUsersNotFriends.length > 0) {

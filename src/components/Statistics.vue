@@ -70,37 +70,25 @@
       </v-col>
     </v-row>
 
-    <v-snackbar
-      v-if="generalSnackText"
-      v-model="generalSnack"
-      :color="this.generalSnackColor"
-      :top="false"
-      :timeout="this.generalSnackTimeout"
-    >
-      {{ generalSnackText }}
-      <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
-    </v-snackbar>
+    <SnackBar ref="SnackBar" />
   </v-content>
 </template>
 
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
-import axios from "axios";
+import SnackBar from "@/components/SnackBar";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   components: {
     Navbar,
-    Authorized
+    Authorized,
+    SnackBar
   },
 
   data() {
     return {
-      generalSnack: false,
-      generalSnackColor: "error",
-      generalSnackText: "",
-      generalSnackTimeout: 5000,
-
       showConsole: false,
       showStats: true,
 
@@ -125,29 +113,46 @@ export default {
     };
   },
 
-  async created() {
-    await axios
-      .post("http://localhost:8000/api/GetAllGamePlayersForUser", {
-        userId: this.loggedInUser["id"]
-      })
-      .then(async playersResponse => {
-        if (playersResponse.data.length > 0) {
-          this.gamePlayers = playersResponse.data;
+  computed: {
+    ...mapGetters([
+      "GetLoggedInUser",
+      "GetGamePlayersForUser",
+      "GetGamesByIdArray"
+    ])
+  },
 
+  async created() {
+    await this.GetAllGamePlayersByUserId({
+      userId: this.GetLoggedInUser["id"]
+    })
+      .then(async () => {
+        if (this.GetGamePlayersForUser.length > 0) {
+          this.gamePlayers = this.GetGamePlayersForUser;
           let gameIdPlayerArray = [];
-          this.gamePlayers.forEach(GP => {
+          this.GetGamePlayersForUser.forEach(GP => {
             gameIdPlayerArray.push(GP["gameId"]);
           });
 
-          await axios
-            .post("http://localhost:8000/api/GetGameByIdArray", {
-              gameIdArray: gameIdPlayerArray
-            })
-            .then(gamesResponse => {
-              this.games = gamesResponse.data;
+          await this.GetGamesByUserIdArray({
+            gameIdArray: gameIdPlayerArray
+          })
+            .then(() => {
+              this.games = this.GetGamesByIdArray;
             })
             .catch(error => {
               console.log(error);
+            })
+            .finally(() => {
+              this.calcGamesPlayed();
+              this.calcGamesWon();
+              this.calcGameWLRatio();
+              this.calcTimesKnocked();
+              this.calcAvgTimesKnocked();
+              this.calcRoundsWon();
+              this.calcRoundsWonWithJack();
+              this.calcRoundWLRatio();
+              this.calcPenaltyScore();
+              this.calcAvgPenaltyScore();
             });
         } else {
           this.showStats = false;
@@ -156,20 +161,10 @@ export default {
       .catch(error => {
         console.log(error);
       });
-
-    this.calcGamesPlayed();
-    this.calcGamesWon();
-    this.calcGameWLRatio();
-    this.calcTimesKnocked();
-    this.calcAvgTimesKnocked();
-    this.calcRoundsWon();
-    this.calcRoundsWonWithJack();
-    this.calcRoundWLRatio();
-    this.calcPenaltyScore();
-    this.calcAvgPenaltyScore();
   },
 
   methods: {
+    ...mapActions(["GetAllGamePlayersByUserId", "GetGamesByUserIdArray"]),
     calcGamesPlayed() {
       let amount = this.games.length;
       this.gamesPlayed = amount;
@@ -239,8 +234,8 @@ export default {
     calcRoundWLRatio() {
       let roundsPlayed = this.games.reduce((a, b) => a + (b["round"] || 0), 0);
       let ratio =
-        Math.round(
-          ((this.roundsWon / roundsPlayed) + Number.EPSILON) * 100) / 100;
+        Math.round((this.roundsWon / roundsPlayed + Number.EPSILON) * 100) /
+        100;
       this.roundWLRatio = ratio;
 
       if (this.showConsole) console.log("Round Ratio = " + ratio);

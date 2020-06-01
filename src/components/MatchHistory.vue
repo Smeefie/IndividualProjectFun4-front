@@ -21,7 +21,12 @@
               :sort-desc="[true, true]"
             >
               <template v-slot:item.actions="{ item }">
-                <v-btn v-if="item.status == 'Finished'" color="primary" class="mr-5" @click="details(item)">Details</v-btn>
+                <v-btn
+                  v-if="item.status == 'Finished'"
+                  color="primary"
+                  class="mr-5"
+                  @click="details(item)"
+                >Details</v-btn>
                 <v-btn v-else color="pending" class="mr-5" @click="resume(item)">Resume</v-btn>
                 <v-btn color="warning" class="mr-5" @click="openDialog(item)">Delete</v-btn>
               </template>
@@ -57,7 +62,7 @@
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
-import axios from "axios";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   components: {
@@ -88,14 +93,17 @@ export default {
     };
   },
 
+  computed: {
+    ...mapGetters(["GetAllGames", "GetLoggedInUser"])
+  },
+
   created() {
-    axios
-      .get(
-        `http://localhost:8000/api/GetAllGamesByUserId/${this.loggedInUser["id"]}`
-      )
-      .then(response => {
-        if (response.data.length > 0) {
-          response.data.forEach(element => {
+      this.GetAllGamesByUserId({
+        userId: this.GetLoggedInUser['id']
+      })
+      .then(() => {
+        if (this.GetAllGames.length > 0) {
+          this.GetAllGames.forEach(element => {
             this.games.push({
               id: element["gameId"],
               limit: element["limit"],
@@ -113,8 +121,8 @@ export default {
   },
 
   methods: {
+    ...mapActions(["DeleteGameById", "GetAllGamesByUserId"]),
     resume(item) {
-      console.log(item.id);
       this.$router.push({
         path: `/Game?gameId=${item.id}`
       });
@@ -125,7 +133,7 @@ export default {
     },
 
     deleteGame(item) {
-      axios.delete(`http://localhost:8000/api/DeleteGame/${item.id}`);
+      this.DeleteGameById({ gameId: item.id });
       function findWithAttr(array, attr, value) {
         for (var i = 0; i < array.length; i += 1) {
           if (array[i][attr] === value) {
@@ -135,7 +143,7 @@ export default {
         return -1;
       }
       this.games.splice(findWithAttr(this.games, "id", item.id), 1);
-      if(this.games.length <= 0) this.showHistory = false;
+      if (this.games.length <= 0) this.showHistory = false;
       this.dialog = false;
     },
 

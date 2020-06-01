@@ -7,7 +7,9 @@ const state = {
     exists: false,
     game: {},
     gameInfo: [],
-    gamePlayers: []
+    gamePlayers: [],
+    gamePlayersForUser: [],
+    gamesByIdArray: []
 };
 
 const getters = {
@@ -15,7 +17,9 @@ const getters = {
     GetGame: state => state.game,
     GetGameInfo: state => state.gameInfo,
     GetGamePlayers: state => state.gamePlayers,
-    GetGameExists: state => state.exists
+    GetGamePlayersForUser: state => state.gamePlayersForUser,
+    GetGameExists: state => state.exists,
+    GetGamesByIdArray: state => state.gamesByIdArray
 };
 
 const actions = {
@@ -113,7 +117,49 @@ const actions = {
                 console.log(error.message);
                 throw error;
             })
-    }
+    },
+    GetAllGamePlayersByUserId(context, credentials) {
+        return axios
+            .get("/GetAllGamePlayersForUser", {
+                params: {
+                    userId: credentials.userId
+                }
+            })
+            .then(response => {
+                context.commit("SetGamePlayersForUser", response.data)
+            })
+            .catch(error => {
+                console.log(error.message);
+                throw error;
+            })
+    },
+    GetGamesByUserIdArray(context, credentials) {
+        return axios
+            .get("/GetGameByIdArray", {
+                params: {
+                    gameIdArray: credentials.gameIdArray
+                }
+            })
+            .then(response => {
+                context.commit("SetGamesByIdArray", response.data)
+            })
+            .catch(error => {
+                console.log(error.message);
+                throw error;
+            })
+    },
+    DeleteGameById(context, credentials) {
+        return axios
+            .delete("/DeleteGame", {
+                data: {
+                    gameId: credentials.gameId
+                }
+            })
+            .catch(error => {
+                console.log(error.message);
+                throw error;
+            })
+    },
 };
 
 const mutations = {
@@ -128,6 +174,12 @@ const mutations = {
     },
     SetGamePlayers(state, gamePlayers) {
         state.gamePlayers = gamePlayers
+    },
+    SetGamesByIdArray(state, gamesByIdArray) {
+        state.gamesByIdArray = gamesByIdArray
+    },
+    SetGamePlayersForUser(state, gamePlayersForUser) {
+        state.gamePlayersForUser = gamePlayersForUser
     },
     SetGameExists(state, exists) {
         state.exists = exists

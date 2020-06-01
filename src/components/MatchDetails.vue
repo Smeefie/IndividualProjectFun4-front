@@ -8,9 +8,13 @@
           <v-toolbar color="primary" dark flat>
             <v-toolbar-title>Match Details</v-toolbar-title>
             <v-spacer></v-spacer>
+            <template>
+              <v-btn color="warning" class="mb-2" @click="dialog = true">Delete Game</v-btn>
+            </template>
           </v-toolbar>
           <v-card-text v-if="showHistory">
             <v-card-title class="justify-center">{{gameId}}</v-card-title>
+            <v-card-subtitle class="text-center">Won by {{winner}}</v-card-subtitle>
 
             <v-data-table
               :headers="headers"
@@ -58,13 +62,31 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row justify="center">
+      <v-dialog v-model="dialog" max-width="290">
+        <v-card>
+          <v-card-title class="headline justify-center">Warning</v-card-title>
+
+          <v-card-text class="text-center">Are you sure you want to delete this game?</v-card-text>
+
+          <v-card-actions class="justify-center">
+            <v-spacer></v-spacer>
+
+            <v-btn color="green darken-1" text @click="dialog = false">No</v-btn>
+
+            <v-btn color="green darken-1" text @click="deleteGame()">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
   </v-content>
 </template>
 
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
-import axios from "axios";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   components: {
@@ -76,36 +98,62 @@ export default {
   data() {
     return {
       showHistory: true,
-      loggedInUser: JSON.parse(localStorage.getItem("loggedInUser")),
+      dialog: false,
       rounds: [],
+      winner: "",
       expanded: false,
       headers: [
         {
           text: "Round",
           align: "start",
-          value: "roundNr"
+          value: "roundNr",
+          sortable: false
         },
-        { text: "", value: "data-table-expand" }
+        {
+          text: "Winner",
+          align: "start",
+          value: "roundWinner",
+          sortable: false
+        },
+        { text: "", value: "data-table-expand", sortable: false }
       ]
     };
   },
 
-  created() {
-    axios
-      .get(`http://localhost:8000/api/GetMatchDetails/${this.gameId}`)
-      .then(response => {
-        response.data.forEach(element => {
-          let roundInfo = element["roundInfo"];
-          let playerInfo = element["playerInfo"];
-          console.log(playerInfo);
-          this.rounds.push({
-            roundNr: roundInfo["roundNr"],
-            players: playerInfo
-          });
-        });
-      }).catch;
+  computed: {
+    ...mapGetters(["GetMatchDetails"])
   },
 
-  methods: {}
+  async created() {
+    await this.GetAllMatchDetails({
+      gameId: this.gameId
+    }).then(() => {
+      this.GetMatchDetails.forEach(element => {
+        let roundInfo = element["roundInfo"];
+        let playerInfo = element["playerInfo"];
+
+        this.rounds.push({
+          roundNr: roundInfo["roundNr"],
+          roundWinner: playerInfo.filter(p => {
+            return p.roundStatus === 1;
+          })[0]["name"],
+          players: playerInfo
+        });
+      });
+    });
+
+    this.winner = this.rounds[this.rounds.length - 1]["players"].filter(p => {
+      return p.status === 2;
+    })[0]["name"];
+  },
+
+  methods: {
+    ...mapActions(["GetAllMatchDetails", "DeleteGameById"]),
+
+    deleteGame() {
+      this.DeleteGameById({ gameId: this.gameId });
+      this.dialog = false;
+    },
+  }
 };
 </script>

@@ -4,6 +4,8 @@ import authorizations from './modules/authorizations';
 import friends from './modules/friends';
 import users from './modules/users';
 import games from './modules/games';
+import histories from './modules/matchHistories';
+
 
 Vue.use(Vuex);
 
@@ -12,6 +14,7 @@ export default new Vuex.Store({
         authorizations,
         friends,
         users,
-        games
+        games,
+        histories
     }
 })
