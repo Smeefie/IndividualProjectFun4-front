@@ -32,17 +32,6 @@
           </v-card>
         </v-col>
       </v-row>
-
-      <v-snackbar
-        v-if="generalSnackText"
-        v-model="generalSnack"
-        :color="this.generalSnackColor"
-        :top="false"
-        :timeout="this.generalSnackTimeout"
-      >
-        {{ generalSnackText }}
-        <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
-      </v-snackbar>
     </v-container>
 
     <v-dialog v-model="registerModal" persistent max-width="600px">
@@ -133,11 +122,6 @@ export default {
       show2: false,
       show3: false,
 
-      generalSnack: false,
-      generalSnackColor: "error",
-      generalSnackText: "",
-      generalSnackTimeout: 5000,
-
       emailRules: [
         value => !!value || "Required.",
         value => (value || "").length <= 35 || "Max 35 characters",
@@ -174,7 +158,7 @@ export default {
             this.$router.push("/Profile");
           })
           .catch(error => {
-            this.$refs.SnackBar.GenerateSnack(error.message);
+            this.$refs.SnackBar.GenerateSnack(error.response.data.message);
           });
       } else {
         this.$refs.SnackBar.GenerateSnack("Please enter all required fields!");

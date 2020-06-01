@@ -26,7 +26,8 @@ const actions = {
                 context.commit('SetFriends', response.data);
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
     GetAllFriendRequestsById(context, credentials) {
@@ -38,7 +39,8 @@ const actions = {
                 context.commit('SetAllFriendRequests', response.data);
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
     GetFriendRequestById(context, credentials) {
@@ -50,7 +52,8 @@ const actions = {
                 context.commit('SetFriendRequest', response.data);
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
 
@@ -61,7 +64,8 @@ const actions = {
                 friendId: credentials.friendId
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
     DeclineFriend(context, credentials) {
@@ -71,7 +75,8 @@ const actions = {
                 friendId: credentials.friendId
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
     AddFriend(context, credentials) {
@@ -84,7 +89,8 @@ const actions = {
                 context.commit('SetAddedFriend', response.data)
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
     RemoveFriend(context, credentials) {
@@ -96,7 +102,8 @@ const actions = {
                 }
             })
             .catch(error => {
-                console.log(error);
+                console.log(error.message);
+                throw error;
             })
     },
 

@@ -24,7 +24,8 @@ const actions = {
                 context.commit('SetAccessToken', response.data['accessToken']);
             })
             .catch(error => {
-                console.log(error.data);
+                console.log(error.message);
+                throw error;
             })
     },
 
@@ -41,7 +42,8 @@ const actions = {
                 context.commit('GetAccessToken', response.data['accessToken']);
             })
             .catch(error => {
-                console.log(error.data);
+                console.log(error.message);
+                throw error;
             })
     },
     UploadUser(context, credentials) {
@@ -54,7 +56,8 @@ const actions = {
                 context.commit('SetLoggedInUser', JSON.stringify(response.data));
             })
             .catch(error => {
-                console.log(error.data);
+                console.log(error.message);
+                throw error;
             })
 
 

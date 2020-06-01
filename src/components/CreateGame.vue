@@ -67,7 +67,7 @@
                 </v-autocomplete>
               </v-col>
               <v-card-actions class="justify-center">
-                <v-btn color="primary" :disabled="!buttonEnabled" @click="SubmitUsers">Start Game</v-btn>
+                <v-btn color="primary" :disabled="!buttonEnabled" @click="StartNewGame">Start Game</v-btn>
               </v-card-actions>
             </v-form>
 
@@ -106,7 +106,6 @@ import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
 import SnackBar from "@/components/SnackBar";
 import { mapGetters, mapActions } from "vuex";
-import axios from "axios";
 
 export default {
   name: "CreateGame",
@@ -158,44 +157,65 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["GetFriends"])
+    ...mapGetters([
+      "GetFriends",
+      "GetUsersNotFriends",
+      "GetLoggedInUser",
+      "GetGameId",
+      "GetGameExists",
+      "GetGame",
+      "GetGamePlayers"
+    ])
   },
 
   created() {
-    this.users = [];
-    var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    this.users.push({ header: "Self" });
-    this.users.push({
-      name: loggedInUser["name"],
-      id: loggedInUser["id"],
-      avatar: loggedInUser["avatar"]
-    });
-    this.users.push({ divider: true });
+    this.Initialize();
+  },
 
-    this.GetAllFriends({id: loggedInUser["id"]});
-
-    if (this.GetFriends > 0) {
-      this.users.push({ header: "Friends" });
-      this.GetFriends.forEach(element => {
-        this.users.push({
-          name: element["name"],
-          id: element["id"],
-          avatar: element["avatar"]
-        });
+  methods: {
+    ...mapActions([
+      "GetAllFriendsById",
+      "GetAllUsersNotFriendsById",
+      "CreateNewGame",
+      "CheckForGameId",
+      "GetGameById",
+      "GetAllGamePlayersByGameId"
+    ]),
+    Initialize() {
+      //ADD YOURSELF TO THE LIST
+      this.users.push({ header: "Self" });
+      this.users.push({
+        name: this.GetLoggedInUser["name"],
+        id: this.GetLoggedInUser["id"],
+        avatar: this.GetLoggedInUser["avatar"]
       });
-    }
 
-    axios
-      .post("http://localhost:8000/api/GetAllUsersNotFriends", {
-        id: loggedInUser["id"]
-      })
-      .then(response => {
-        this.fullResponse = response.data;
+      //ADD ALL YOUR FRIENDS TO THE LIST
+      this.GetAllFriendsById({
+        id: this.GetLoggedInUser["id"]
+      }).then(() => {
+        if (this.GetFriends.length > 0) {
+          this.users.push({ divider: true });
+          this.users.push({ header: "Friends" });
+          this.GetFriends.forEach(element => {
+            this.users.push({
+              name: element["name"],
+              id: element["id"],
+              avatar: element["avatar"]
+            });
+          });
+        }
+      });
 
-        if (this.fullResponse.length > 0) {
+      //ADD ALL OTHER USERS TO THE LIST
+      this.GetAllUsersNotFriendsById({
+        id: this.GetLoggedInUser["id"]
+      }).then(() => {
+        if (this.GetUsersNotFriends.length > 0) {
           this.users.push({ divider: true });
           this.users.push({ header: "Others" });
-          this.fullResponse.forEach(element => {
+
+          this.GetUsersNotFriends.forEach(element => {
             this.users.push({
               name: element["name"],
               id: element["id"],
@@ -204,81 +224,70 @@ export default {
           });
         }
       });
-  },
+    },
 
-  methods: {
-    ...mapActions(["GetAllFriends"]),
-    SubmitUsers() {
+    StartNewGame() {
       let gameId = -1;
-      axios
-        .post("http://localhost:8000/api/CreateGame", {
-          players: this.selectedUsers,
-          limit: this.roundLimit == "" ? 15 : this.roundLimit,
-          loggedInId: JSON.parse(localStorage.getItem("loggedInUser"))["id"]
-        })
-        .then(response => {
-          gameId = response.data;
+      this.CreateNewGame({
+        players: this.selectedUsers,
+        limit: this.roundLimit == "" ? 15 : this.roundLimit,
+        creatorId: this.GetLoggedInUser["id"]
+      })
+        .then(() => {
+          gameId = this.GetGameId;
         })
         .catch(error => {
           console.log(error);
+          this.$refs.SnackBar.GenerateSnack(error.response.data.message);
         })
         .finally(() => {
           if (gameId != -1) {
             this.$router.push({ path: `/Game?gameId=${gameId}` });
           } else {
-            console.log("No Valid Game Id Found");
+            this.$refs.SnackBar.GenerateSnack("No Valid Game Id Found");
           }
         });
     },
 
     resumeGame() {
-      var loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+      this.CheckForGameId({
+        gameId: this.gameId
+      })
+        .then(async () => {
+          if (this.GetGameExists == true) {
+            await this.GetGameById({
+              gameId: this.gameId
+            }).then(async () => {
+              if (this.GetGame["status"] == 1) {
+                this.$refs.SnackBar.GenerateSnack(
+                  "This game is not in progress anymore!"
+                );
+              } else {
+                await this.GetAllGamePlayersByGameId({
+                  gameId: this.gameId
+                }).then(() => {
+                  var userInGame = false;
+                  this.GetGamePlayers.forEach(player => {
+                    if (player["userId"] == this.GetLoggedInUser["id"]) {
+                      userInGame = true;
+                    }
+                  });
 
-      axios
-        .post("http://localhost:8000/api/CheckIfGameExists", {
-          gameId: this.gameId
-        })
-        .then(async response => {
-          if (response.data == 1) {
-            await axios
-              .post("http://localhost:8000/api/GetGameById", {
-                gameId: this.gameId
-              })
-              .then(async gameResponse => {
-                if (gameResponse.data["status"] == 1) {
-                  this.$refs.SnackBar.GenerateSnack(
-                    "This game is not in progress anymore!"
-                  );
-                } else {
-                  await axios
-                    .post("http://localhost:8000/api/GetAllGamePlayers", {
-                      gameId: this.gameId
-                    })
-                    .then(playersResponse => {
-                      var userInGame = false;
-                      for (var i = 0; i < playersResponse.data.length; i++) {
-                        let player = playersResponse.data[i];
-                        if (player["userId"] == loggedInUser["id"]) {
-                          userInGame = true;
-                          break;
-                        }
-                      }
-
-                      if (
-                        !userInGame &&
-                        gameResponse.data["creatorId"] != loggedInUser["id"]
-                      ) {
-                        this.$refs.SnackBar.GenerateSnack(
-                          "You do not have access to this game!"
-                        );
-                      } else {
-                        this.$router.push({
-                          path: `/Game?gameId=${this.gameId}`
-                        });
-                      }
+                  if (
+                    !userInGame &&
+                    this.GetGame["creatorId"] != this.GetLoggedInUser["id"]
+                  ) {
+                    this.$refs.SnackBar.GenerateSnack(
+                      "You do not have access to this game!"
+                    );
+                  } else {
+                    this.$router.push({
+                      path: `/Game?gameId=${this.gameId}`
                     });
-                }
-              });
+                  }
+                });
+              }
+            });
           } else {
             this.$refs.SnackBar.GenerateSnack("This GameId does not exists!");
           }

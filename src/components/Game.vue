@@ -113,7 +113,7 @@
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
-import axios from "axios";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   components: {
@@ -146,50 +146,49 @@ export default {
     };
   },
 
+  computed: {
+    ...mapGetters(["GetGameInfo", "GetUser"])
+  },
+
   created() {
     this.initialize();
   },
 
   methods: {
+    ...mapActions(["GetGameInfoByGameId", "GetUserById", "SaveRound", "SaveGame"]),
     initialize() {
       this.gameId = JSON.parse(this.$route.query.gameId);
 
-      axios
-        .post("http://localhost:8000/api/GetGameInfo", {
-          gameId: this.gameId
-        })
-        .then(async response => {
-          await response.data["players"].forEach(player => {
-            axios
-              .post("http://localhost:8000/api/GetUserById", {
-                id: player["userId"]
-              })
-              .then(async userResponse => {
-                let label = "";
-                if (player["status"] == 1) {
-                  label = "ELIMINATED";
-                } else if (player["status"] == 2) {
-                  label = "WINNER";
-                }
-                await this.users.push({
-                  id: userResponse.data["id"],
-                  name: userResponse.data["name"],
-                  avatar: userResponse.data["avatar"],
-                  score: player["score"],
-                  knocked: 0,
-                  timesKnocked: player["timesKnocked"],
-                  roundsWon: player["roundsWon"],
-                  roundsWonWithJack: player["roundsWonWithJack"],
-                  status: player["status"],
-                  statusLabel: label
-                });
-              });
+      this.GetGameInfoByGameId({
+        gameId: this.gameId
+      }).then(async () => {
+        await this.GetGameInfo["players"].forEach(player => {
+          this.GetUserById({
+            id: player["userId"]
+          }).then(async () => {
+            let label = "";
+            if (player["status"] != 0) {
+              label = player["status"] == 1 ? "ELIMINATED" : "WINNER";
+            }
+            await this.users.push({
+              id: this.GetUser["id"],
+              name: this.GetUser["name"],
+              avatar: this.GetUser["avatar"],
+              score: player["score"],
+              knocked: 0,
+              timesKnocked: player["timesKnocked"],
+              roundsWon: player["roundsWon"],
+              roundsWonWithJack: player["roundsWonWithJack"],
+              status: player["status"],
+              statusLabel: label
+            });
           });
-
-          let gameInfo = response.data["info"];
-          this.gameRound = gameInfo["round"];
-          this.scoreLimit = gameInfo["limit"];
         });
+
+        let gameInfo = this.GetGameInfo["info"];
+        this.gameRound = gameInfo["round"];
+        this.scoreLimit = gameInfo["limit"];
+      });
     },
 
     async won(item, withJack = false) {
@@ -264,32 +263,28 @@ export default {
     },
 
     updateGame() {
-      axios
-        .post("http://localhost:8000/api/UpdateGame", {
-          gameId: this.gameId,
-          players: this.users,
-          status: this.gameStatus,
-          round: this.gameRound
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      this.SaveGame({
+        gameId: this.gameId,
+        players: this.users,
+        status: this.gameStatus,
+        round: this.gameRound
+      }).catch(error => {
+        console.log(error);
+      });
     },
 
     updateRound(item, withJack = false) {
-      axios
-        .post("http://localhost:8000/api/UpdateRounds", {
-          gameId: this.gameId,
-          winner: item.id,
-          withJack: withJack,
-          roundObject: {
-            roundInfo: { roundNr: this.gameRound },
-            playerInfo: this.users
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      this.SaveRound({
+        gameId: this.gameId,
+        winner: item.id,
+        withJack: withJack,
+        roundObject: {
+          roundInfo: { roundNr: this.gameRound },
+          playerInfo: this.users
+        }
+      }).catch(error => {
+        console.log(error);
+      });
     }
   }
 };

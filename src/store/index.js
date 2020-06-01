@@ -3,6 +3,7 @@ import Vuex from 'vuex';
 import authorizations from './modules/authorizations';
 import friends from './modules/friends';
 import users from './modules/users';
+import games from './modules/games';
 
 Vue.use(Vuex);
 
@@ -10,6 +11,7 @@ export default new Vuex.Store({
     modules: {
         authorizations,
         friends,
-        users
+        users,
+        games
     }
 })

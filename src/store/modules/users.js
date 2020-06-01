@@ -22,7 +22,8 @@ const actions = {
                 context.commit('SetUser', response.data);
             })
             .catch(error => {
-                console.log(error.data);
+                console.log(error.message);
+                throw error;
             })
     },
     GetAllUsersNotFriendsById(context, credentials) {
@@ -34,7 +35,8 @@ const actions = {
                 context.commit('SetUsersNotFriends', response.data);
             })
             .catch(error => {
-                console.log(error.data);
+                console.log(error.message);
+                throw error;
             })
     },
 };
