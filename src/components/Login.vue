@@ -32,17 +32,6 @@
           </v-card>
         </v-col>
       </v-row>
-
-      <v-snackbar
-        v-if="generalSnackText"
-        v-model="generalSnack"
-        :color="this.generalSnackColor"
-        :top="false"
-        :timeout="this.generalSnackTimeout"
-      >
-        {{ generalSnackText }}
-        <v-btn color="accent_light" text @click="generalSnack = false">Close</v-btn>
-      </v-snackbar>
     </v-container>
 
     <v-dialog v-model="registerModal" persistent max-width="600px">
@@ -80,7 +69,7 @@
                   label="Password*"
                   :append-icon="show2 ? 'mdi-eye' : 'mdi-eye-off'"
                   :type="show2 ? 'text' : 'password'"
-                  @click:append="show2 = !show2"                 
+                  @click:append="show2 = !show2"
                   required
                   :rules="passwordRules"
                 ></v-text-field>
@@ -91,7 +80,7 @@
                   label="Verify Password*"
                   :append-icon="show3 ? 'mdi-eye' : 'mdi-eye-off'"
                   :type="show3 ? 'text' : 'password'"
-                  @click:append="show3 = !show3"             
+                  @click:append="show3 = !show3"
                   required
                 ></v-text-field>
               </v-col>
@@ -106,14 +95,21 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <SnackBar ref="SnackBar" />
   </v-content>
 </template>
 
 <script>
-import axios from "axios";
+import SnackBar from "@/components/SnackBar";
+import { mapActions } from "vuex";
 
 export default {
   name: "Login",
+  components: {
+    SnackBar
+  },
+
   data() {
     return {
       username: "",
@@ -125,12 +121,6 @@ export default {
       show1: false,
       show2: false,
       show3: false,
-
-
-      generalSnack: false,
-      generalSnackColor: "error",
-      generalSnackText: "",
-      generalSnackTimeout: 5000,
 
       emailRules: [
         value => !!value || "Required.",
@@ -154,28 +144,24 @@ export default {
       ]
     };
   },
+
   methods: {
+    ...mapActions(["LoginUser", "RegisterUser", "UploadUser"]),
     Login() {
       if (this.email != "" && this.password != "") {
-        axios
-          .post("http://localhost:8000/api/Login", {
-            email: this.email,
-            password: this.password
-          })
-          .then(async response => {
-            this.fullResponse = response.data;
-            localStorage.setItem("accessToken", response.data["access_token"]);
+        this.LoginUser({
+          email: this.email,
+          password: this.password
+        })
+          .then(async () => {
             await this.AddUserToLocalStorage(this.email);
             this.$router.push("/Profile");
           })
           .catch(error => {
-            console.warn(error);
-            this.generalSnackText = error.response.data.message;
-            this.generalSnack = true;
+            this.$refs.SnackBar.GenerateSnack(error.response.data.message);
           });
       } else {
-        this.generalSnackText = "Please enter all required fields!";
-        this.generalSnack = true;
+        this.$refs.SnackBar.GenerateSnack("Please enter all required fields!");
       }
     },
     Register() {
@@ -185,41 +171,28 @@ export default {
         this.password != "" &&
         this.password_confirmation != ""
       ) {
-        axios
-          .post("http://localhost:8000/api/Register", {
-            name: this.username,
-            email: this.email,
-            password: this.password,
-            password_confirmation: this.password_confirmation
-          })
-          .then(async response => {
-            localStorage.setItem("accessToken", response.data["access_token"]);
+        this.RegisterUser({
+          name: this.username,
+          email: this.email,
+          password: this.password,
+          password_confirmation: this.password_confirmation
+        })
+          .then(async () => {
             await this.AddUserToLocalStorage(this.email);
             this.$router.push("/Profile");
           })
           .catch(error => {
-            console.warn(error);
-            this.generalSnackText = error.response.data.message;
-            this.generalSnack = true;
+            this.$refs.SnackBar.GenerateSnack(error.response.data.message);
           });
       } else {
-        this.generalSnackText = "Please enter all required fields!";
-        this.generalSnack = true;
+        this.$refs.SnackBar.GenerateSnack("Please enter all required fields!");
       }
     },
 
     AddUserToLocalStorage(loggedInEmail) {
-      return axios
-        .post("http://localhost:8000/api/GetUserByEmail", {
-          email: loggedInEmail
-        })
-        .then(response => {
-          this.fullResponse = response.data;
-          localStorage.setItem("loggedInUser", JSON.stringify(response.data));
-        })
-        .catch(error => {
-          console.warn(error);
-        });
+      return this.UploadUser({
+        email: loggedInEmail
+      });
     }
   }
 };

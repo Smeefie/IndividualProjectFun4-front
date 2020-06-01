@@ -16,30 +16,16 @@
 
           <v-card-text>
             <v-card-title class="justify-center">Game Info</v-card-title>
-            <v-row>
-              <v-col cols="12" sm="6" md="6" class="text-center">
-                <v-card-subtitle style="font-size: 1.5em">General</v-card-subtitle>
-                <v-row>
-                  <v-col class="text-end">Round:</v-col>
-                  <v-col class="text-center">{{gameRound}}</v-col>
-                </v-row>
-                <v-row>
-                  <v-col class="text-end">Limit:</v-col>
-                  <v-col class="text-center">{{scoreLimit}}</v-col>
-                </v-row>
-              </v-col>
-              <v-col cols="12" sm="6" md="6" class="text-center">
-                <v-card-subtitle style="font-size: 1.5em">Test</v-card-subtitle>
-                <v-row>
-                  <v-col class="text-end">Round:</v-col>
-                  <v-col class="text-center">3</v-col>
-                </v-row>
-                <v-row>
-                  <v-col class="text-end">Limit:</v-col>
-                  <v-col class="text-center">15</v-col>
-                </v-row>
-              </v-col>
-            </v-row>
+            <v-col>
+              <v-row>
+                <v-col class="text-end">Round:</v-col>
+                <v-col class="text-start">{{gameRound}}</v-col>
+              </v-row>
+              <v-row>
+                <v-col class="text-end">Limit:</v-col>
+                <v-col class="text-start">{{scoreLimit}}</v-col>
+              </v-row>
+            </v-col>
           </v-card-text>
 
           <v-card-text>
@@ -59,7 +45,7 @@
                         icon
                         v-on="on"
                         @click="item.knocked++; item.timesKnocked++"
-                        :disabled="item.status == 1"
+                        :disabled="item.status != 0"
                       >
                         <v-icon>mdi-boxing-glove</v-icon>
                       </v-btn>
@@ -75,7 +61,7 @@
                       v-on="on"
                       class="mr-2"
                       @click="won(item, true)"
-                      :disabled="item.status == 1"
+                      :disabled="item.status != 0"
                     >
                       <v-icon>mdi-cards</v-icon>
                     </v-btn>
@@ -89,7 +75,7 @@
                       v-on="on"
                       class="mr-2"
                       @click="won(item)"
-                      :disabled="item.status == 1"
+                      :disabled="item.status != 0"
                     >
                       <v-icon>mdi-flag-checkered</v-icon>
                     </v-btn>
@@ -127,7 +113,7 @@
 <script>
 import Navbar from "@/components/Navbar";
 import Authorized from "@/components/Authorized";
-import axios from "axios";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   components: {
@@ -142,20 +128,26 @@ export default {
         {
           text: "Name",
           align: "start",
-          value: "name"
+          value: "name",
+          sortable: false
         },
         { text: "Score", value: "score", align: "center" },
-        // { text: "Knocked", value: "knocked", align: "end", sortable: false },
+        { text: "", align: "end", value: "statusLabel", sortable: false },
         { text: "Actions", value: "actions", align: "end", sortable: false }
       ],
       users: [],
+      rounds: [],
 
       //Game info
       gameId: -1,
-      gameRound: 0,
+      gameRound: 1,
       gameStatus: 0,
       scoreLimit: 10
     };
+  },
+
+  computed: {
+    ...mapGetters(["GetGameInfo", "GetUser"])
   },
 
   created() {
@@ -163,41 +155,45 @@ export default {
   },
 
   methods: {
+    ...mapActions(["GetGameInfoByGameId", "GetUserById", "SaveRound", "SaveGame"]),
     initialize() {
       this.gameId = JSON.parse(this.$route.query.gameId);
 
-      axios
-        .post("http://localhost:8000/api/GetGameInfo", {
-          gameId: this.gameId
-        })
-        .then(async response => {
-          await response.data["players"].forEach(player => {
-            axios
-              .post("http://localhost:8000/api/GetUserById", {
-                id: player["userId"]
-              })
-              .then(async userResponse => {
-                await this.users.push({
-                  id: userResponse.data["id"],
-                  name: userResponse.data["name"],
-                  avatar: userResponse.data["avatar"],
-                  score: player["score"],
-                  knocked: 0,
-                  timesKnocked: player["timesKnocked"],
-                  roundsWon: player["roundsWon"],
-                  roundsWonWithJack: player["roundsWonWithJack"],
-                  status: player["status"]
-                });
-              });
+      this.GetGameInfoByGameId({
+        gameId: this.gameId
+      }).then(async () => {
+        await this.GetGameInfo["players"].forEach(player => {
+          this.GetUserById({
+            id: player["userId"]
+          }).then(async () => {
+            let label = "";
+            if (player["status"] != 0) {
+              label = player["status"] == 1 ? "ELIMINATED" : "WINNER";
+            }
+            await this.users.push({
+              id: this.GetUser["id"],
+              name: this.GetUser["name"],
+              avatar: this.GetUser["avatar"],
+              score: player["score"],
+              knocked: 0,
+              timesKnocked: player["timesKnocked"],
+              roundsWon: player["roundsWon"],
+              roundsWonWithJack: player["roundsWonWithJack"],
+              status: player["status"],
+              statusLabel: label
+            });
           });
-
-          let gameInfo = response.data["info"];
-          this.gameRound = gameInfo["round"];
-          this.scoreLimit = gameInfo["limit"];
         });
+
+        let gameInfo = this.GetGameInfo["info"];
+        this.gameRound = gameInfo["round"];
+        this.scoreLimit = gameInfo["limit"];
+      });
     },
 
-    won(item, withJack = false) {
+    async won(item, withJack = false) {
+      await this.updateRound(item, withJack);
+
       this.users.forEach(user => {
         if (user.id != item.id && user.status != 1) {
           if (!withJack) {
@@ -230,6 +226,7 @@ export default {
       this.users.forEach(user => {
         if (user.score >= this.scoreLimit) {
           user.status = true;
+          user.statusLabel = "ELIMINATED";
         }
       });
 
@@ -252,7 +249,7 @@ export default {
       if (winner != null) {
         winner.status = 2;
         this.gameStatus = 1;
-        console.log(winner.id);
+        winner.statusLabel = "WINNER";
       }
     },
 
@@ -266,16 +263,28 @@ export default {
     },
 
     updateGame() {
-      axios
-        .post("http://localhost:8000/api/UpdateGame", {
-          gameId: this.gameId,
-          players: this.users,
-          status: this.gameStatus,
-          round: this.gameRound
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      this.SaveGame({
+        gameId: this.gameId,
+        players: this.users,
+        status: this.gameStatus,
+        round: this.gameRound
+      }).catch(error => {
+        console.log(error);
+      });
+    },
+
+    updateRound(item, withJack = false) {
+      this.SaveRound({
+        gameId: this.gameId,
+        winner: item.id,
+        withJack: withJack,
+        roundObject: {
+          roundInfo: { roundNr: this.gameRound },
+          playerInfo: this.users
+        }
+      }).catch(error => {
+        console.log(error);
+      });
     }
   }
 };
