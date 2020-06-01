@@ -13,6 +13,11 @@ import MatchDetails from './components/MatchDetails.vue';
 Vue.use(Router);
 
 const routes = [{
+        path: '/',
+        name: 'Login',
+        component: Login
+    },
+    {
         path: '/Login',
         name: 'Login',
         component: Login
