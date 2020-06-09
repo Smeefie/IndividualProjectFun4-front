@@ -25,9 +25,9 @@
             <v-card-actions>
               <v-spacer></v-spacer>
 
-              <v-btn color="primary" v-on:click="Login()">Login</v-btn>
+              <v-btn color="primary" name="login" v-on:click="Login()">Login</v-btn>
               <v-btn text disabled>or</v-btn>
-              <v-btn color="warning" @click="registerModal = true">Register</v-btn>
+              <v-btn color="warning" name="register" @click="registerModal = true">Register</v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -47,6 +47,7 @@
               <v-col cols="12">
                 <v-text-field
                   v-model="username"
+                  name="registerUsername"
                   :counter="20"
                   label="Username*"
                   required
@@ -56,6 +57,7 @@
               <v-col cols="12">
                 <v-text-field
                   v-model="email"
+                  name="registerEmail"
                   :counter="30"
                   label="Email*"
                   required
@@ -65,6 +67,7 @@
               <v-col cols="12">
                 <v-text-field
                   v-model="password"
+                  name="registerPassword"
                   :counter="20"
                   label="Password*"
                   :append-icon="show2 ? 'mdi-eye' : 'mdi-eye-off'"
@@ -77,6 +80,7 @@
               <v-col cols="12">
                 <v-text-field
                   v-model="password_confirmation"
+                  name="registerPassword_confirmation"
                   label="Verify Password*"
                   :append-icon="show3 ? 'mdi-eye' : 'mdi-eye-off'"
                   :type="show3 ? 'text' : 'password'"
@@ -91,7 +95,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="registerModal = false">Close</v-btn>
-          <v-btn color="blue darken-1" text @click="Register()">Register</v-btn>
+          <v-btn color="blue darken-1" name="submitRegister" text @click="Register()">Register</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

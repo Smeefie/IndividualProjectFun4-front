@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="0"
+            tests="1">
+
+  <testsuite name="c_Games.e_createGameTest"
+    errors="0" failures="0" hostname="" id="" package="c_Games" skipped="0"
+    tests="1" time="8.603" timestamp="">
+  
+    <testcase name="Create Game for NightWatchUser" classname="c_Games.e_createGameTest" time="8.603" assertions="9">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    </testcase>
+  
+
+  
+
+    
+
+  
+  </testsuite>
+</testsuites>

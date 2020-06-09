@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="0"
+            tests="1">
+
+  <testsuite name="Friends.c_addFriendTest"
+    errors="0" failures="0" hostname="" id="" package="Friends" skipped="0"
+    tests="1" time="9.038" timestamp="">
+  
+    <testcase name="Add Friend for NightWatchUser" classname="Friends.c_addFriendTest" time="9.038" assertions="8">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    </testcase>
+  
+
+  
+
+    
+
+  
+  </testsuite>
+</testsuites>

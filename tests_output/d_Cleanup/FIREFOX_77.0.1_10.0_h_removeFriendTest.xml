@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="0"
+            tests="1">
+
+  <testsuite name="d_Cleanup.h_removeFriendTest"
+    errors="0" failures="0" hostname="" id="" package="d_Cleanup" skipped="0"
+    tests="1" time="9.066" timestamp="">
+  
+    <testcase name="Remove Friend for NightWatchUser" classname="d_Cleanup.h_removeFriendTest" time="9.066" assertions="8">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    </testcase>
+  
+
+  
+
+    
+
+  
+  </testsuite>
+</testsuites>
