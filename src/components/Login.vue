@@ -162,7 +162,7 @@ export default {
             this.$router.push("/Profile");
           })
           .catch(error => {
-            this.$refs.SnackBar.GenerateSnack(error.response.data.message);
+            this.$refs.SnackBar.GenerateSnack(error.data.message);
           });
       } else {
         this.$refs.SnackBar.GenerateSnack("Please enter all required fields!");
@@ -186,7 +186,7 @@ export default {
             this.$router.push("/Profile");
           })
           .catch(error => {
-            this.$refs.SnackBar.GenerateSnack(error.response.data.message);
+            this.$refs.SnackBar.GenerateSnack(error.data.message);
           });
       } else {
         this.$refs.SnackBar.GenerateSnack("Please enter all required fields!");
