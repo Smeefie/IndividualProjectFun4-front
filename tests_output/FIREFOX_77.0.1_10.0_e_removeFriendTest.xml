@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="0"
+            failures="0"
+            tests="1">
+
+  <testsuite name="e_removeFriendTest"
+    errors="0" failures="0" hostname="" id="" package="e_removeFriendTest" skipped="0"
+    tests="1" time="8.238" timestamp="">
+  
+    <testcase name="Remove Friend for NightWatchUser" classname="e_removeFriendTest" time="8.238" assertions="8">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    </testcase>
+  
+
+  
+
+    
+
+  
+  </testsuite>
+</testsuites>

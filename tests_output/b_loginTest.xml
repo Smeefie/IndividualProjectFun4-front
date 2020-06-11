@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="1"
+            failures="0"
+            tests="0">
+
+  <testsuite name="b_loginTest"
+    errors="1" failures="0" hostname="" id="" package="b_loginTest" skipped="1"
+    tests="0" time="0.000" timestamp="">
+  
+
+  
+    <system-err>
+        TypeError: browser.init(...).waitForElementVisible(...).assert.titleContains(...).assert.visible(...).click(...).setvalue is not a function
+   - writing an ES6 async test case? - keep in mind that commands return a Promise; 
+   - writing unit tests? - make sure to specify &#34;unit_tests_mode=true&#34; in your config.
+       at Object.Register for NightWatchUser (D:\FHICT\FUN\IndividualProjectFun4-front\tests\a_registerTest.js:11:14)
+       at processTicksAndRejections (internal/process/task_queues.js:97:5)
+  Error: An error occurred while retrieving a new session: &#34;Failed to decode response from marionette&#34;
+       at endReadableNT (_stream_readable.js:1187:12)
+       at processTicksAndRejections (internal/process/task_queues.js:84:21)
+    </system-err>
+  
+
+    
+    <error message="An error occurred while retrieving a new session: &#34;Failed to decode response from marionette&#34;"><![CDATA[
+      Error: An error occurred while retrieving a new session: &#34;Failed to decode response from marionette&#34;
+    at WebdriverProtocol.handleSessionCreateError (D:\FHICT\FUN\IndividualProjectFun4-front\node_modules\nightwatch\lib\transport\transport.js:103:15)
+    at HttpRequest.&lt;anonymous&gt; (D:\FHICT\FUN\IndividualProjectFun4-front\node_modules\nightwatch\lib\transport\transport.js:158:32)
+    at HttpRequest.emit (events.js:310:20)
+    at HttpResponse.&lt;anonymous&gt; (D:\FHICT\FUN\IndividualProjectFun4-front\node_modules\nightwatch\lib\http\request.js:131:19)
+    at HttpResponse.emit (events.js:310:20)
+    at IncomingMessage.&lt;anonymous&gt; (D:\FHICT\FUN\IndividualProjectFun4-front\node_modules\nightwatch\lib\http\response.js:60:14)
+    at IncomingMessage.emit (events.js:322:22)
+    at endReadableNT (_stream_readable.js:1187:12)
+    at processTicksAndRejections (internal/process/task_queues.js:84:21)
+      ]]></error>  
+
+  
+    
+    <testcase
+      name="Login for TestUser2" classname="b_loginTest">
+      <skipped />
+    </testcase>
+    
+  
+  </testsuite>
+</testsuites>
