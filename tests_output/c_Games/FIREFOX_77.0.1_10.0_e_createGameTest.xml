@@ -5,9 +5,9 @@
 
   <testsuite name="c_Games.e_createGameTest"
     errors="0" failures="0" hostname="" id="" package="c_Games" skipped="0"
-    tests="1" time="8.603" timestamp="">
+    tests="1" time="8.671" timestamp="">
   
-    <testcase name="Create Game for NightWatchUser" classname="c_Games.e_createGameTest" time="8.603" assertions="9">
+    <testcase name="Create Game for NightWatchUser" classname="c_Games.e_createGameTest" time="8.671" assertions="9">
 
     
 

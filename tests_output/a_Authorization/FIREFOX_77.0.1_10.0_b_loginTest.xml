@@ -5,9 +5,9 @@
 
   <testsuite name="a_Authorization.b_loginTest"
     errors="0" failures="0" hostname="" id="" package="a_Authorization" skipped="0"
-    tests="1" time="4.400" timestamp="">
+    tests="1" time="3.927" timestamp="">
   
-    <testcase name="Login for NightWatchUser" classname="a_Authorization.b_loginTest" time="4.400" assertions="6">
+    <testcase name="Login for NightWatchUser" classname="a_Authorization.b_loginTest" time="3.927" assertions="6">
 
     
 

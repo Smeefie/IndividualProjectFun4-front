@@ -5,9 +5,9 @@
 
   <testsuite name="d_Cleanup.h_removeFriendTest"
     errors="0" failures="0" hostname="" id="" package="d_Cleanup" skipped="0"
-    tests="1" time="9.066" timestamp="">
+    tests="1" time="9.090" timestamp="">
   
-    <testcase name="Remove Friend for NightWatchUser" classname="d_Cleanup.h_removeFriendTest" time="9.066" assertions="8">
+    <testcase name="Remove Friend for NightWatchUser" classname="d_Cleanup.h_removeFriendTest" time="9.090" assertions="8">
 
     
 

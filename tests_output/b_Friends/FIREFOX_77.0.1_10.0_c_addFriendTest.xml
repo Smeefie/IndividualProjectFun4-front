@@ -5,9 +5,9 @@
 
   <testsuite name="b_Friends.c_addFriendTest"
     errors="0" failures="0" hostname="" id="" package="b_Friends" skipped="0"
-    tests="1" time="8.517" timestamp="">
+    tests="1" time="9.106" timestamp="">
   
-    <testcase name="Add Friend for NightWatchUser" classname="b_Friends.c_addFriendTest" time="8.517" assertions="8">
+    <testcase name="Add Friend for NightWatchUser" classname="b_Friends.c_addFriendTest" time="9.106" assertions="8">
 
     
 

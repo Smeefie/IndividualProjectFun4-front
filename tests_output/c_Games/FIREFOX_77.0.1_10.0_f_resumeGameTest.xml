@@ -5,9 +5,9 @@
 
   <testsuite name="c_Games.f_resumeGameTest"
     errors="0" failures="0" hostname="" id="" package="c_Games" skipped="0"
-    tests="1" time="5.639" timestamp="">
+    tests="1" time="6.703" timestamp="">
   
-    <testcase name="Resume Game for NightWatchUser" classname="c_Games.f_resumeGameTest" time="5.639" assertions="7">
+    <testcase name="Resume Game for NightWatchUser" classname="c_Games.f_resumeGameTest" time="6.703" assertions="7">
 
     
 

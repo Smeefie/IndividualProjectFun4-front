@@ -5,9 +5,9 @@
 
   <testsuite name="c_Games.g_loadStatisticsTest"
     errors="0" failures="0" hostname="" id="" package="c_Games" skipped="0"
-    tests="1" time="4.797" timestamp="">
+    tests="1" time="4.809" timestamp="">
   
-    <testcase name="Load Statistics for NightWatchUser" classname="c_Games.g_loadStatisticsTest" time="4.797" assertions="5">
+    <testcase name="Load Statistics for NightWatchUser" classname="c_Games.g_loadStatisticsTest" time="4.809" assertions="5">
 
     
 
