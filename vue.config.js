@@ -1,5 +1,8 @@
 module.exports = {
-  "transpileDependencies": [
-    "vuetify"
-  ]
+    "transpileDependencies": [
+        "vuetify"
+    ],
+    devServer: {
+        proxy: 'https://toephulp-back.smeefnet.nl/',
+    }
 }
